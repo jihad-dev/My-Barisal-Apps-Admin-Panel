@@ -1,83 +1,203 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Package,
-  ShoppingCart,
   Users,
-  BarChart,
+  Home,
   X,
   ChevronDown,
-  ChevronRight,
-  Home,
-  Users2,
+  Hospital,
+  Truck,
+  Scale,
+  Star,
+  Newspaper,
+  School,
+  Phone,
+  Settings,
+  LogOut,
 } from "lucide-react";
 
-interface SidebarLinkProps {
+import { logout } from "../../Redux/features/auth/authSlice";
+
+// ── Types ──
+interface TChild {
+  to: string;
+  label: string;
+}
+interface TNavItem {
   to: string;
   icon: React.ReactNode;
   label: string;
-  active: boolean;
-  children?: { to: string; label: string }[];
+  badge?: number;
+  children?: TChild[];
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({
-  to,
-  icon,
-  label,
-  active,
-  children,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const hasChildren = children && children.length > 0;
+// ── Nav Items ──
+const navigation: TNavItem[] = [
+  {
+    to: "/dashboard/admin-home",
+    icon: <LayoutDashboard size={18} />,
+    label: "ড্যাশবোর্ড",
+  },
+  {
+    to: "/dashboard/hospitals",
+    icon: <Hospital size={18} />,
+    label: "হাসপাতাল",
+    children: [
+      { to: "/dashboard/hospitals", label: "সব হাসপাতাল" },
+      { to: "/dashboard/hospitals/add", label: "নতুন যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/ambulances",
+    icon: <Truck size={18} />,
+    label: "অ্যাম্বুলেন্স",
+    children: [
+      { to: "/dashboard/ambulances", label: "সব অ্যাম্বুলেন্স" },
+      { to: "/dashboard/ambulances/add", label: "নতুন যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/lawyers",
+    icon: <Scale size={18} />,
+    label: "আইনজীবী",
+    children: [
+      { to: "/dashboard/lawyers", label: "সব আইনজীবী" },
+      { to: "/dashboard/lawyers/add", label: "নতুন যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/notable",
+    icon: <Star size={18} />,
+    label: "গুণীজন",
+    children: [
+      { to: "/dashboard/notable", label: "সব গুণীজন" },
+      { to: "/dashboard/notable/add", label: "নতুন যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/news",
+    icon: <Newspaper size={18} />,
+    label: "সংবাদ",
+    children: [
+      { to: "/dashboard/news", label: "সব সংবাদ" },
+      { to: "/dashboard/news/add", label: "নতুন যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/education",
+    icon: <School size={18} />,
+    label: "শিক্ষা প্রতিষ্ঠান",
+    children: [
+      { to: "/dashboard/education", label: "সব প্রতিষ্ঠান" },
+      { to: "/dashboard/education/add", label: "নতুন যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/helpline",
+    icon: <Phone size={18} />,
+    label: "হেল্পলাইন",
+  },
+  {
+    to: "/dashboard/users",
+    icon: <Users size={18} />,
+    label: "ব্যবহারকারী",
+  },
+  {
+    to: "/dashboard/settings",
+    icon: <Settings size={18} />,
+    label: "সেটিংস",
+  },
+];
 
-  const toggleSubmenu = (e: React.MouseEvent) => {
-    if (hasChildren) {
-      e.preventDefault();
-      setIsOpen(!isOpen);
-    }
-  };
+// ── Single Nav Item ──
+const NavItem = ({
+  item,
+  onClose,
+}: {
+  item: TNavItem;
+  onClose?: () => void;
+}) => {
+  const location = useLocation();
+  const hasChildren = item.children && item.children.length > 0;
+  const isChildActive = item.children?.some((c) => location.pathname === c.to);
+  const isActive = location.pathname === item.to || isChildActive;
+  const [open, setOpen] = useState(isChildActive ?? false);
 
   return (
-    <div className="mb-1">
+    <div>
       <Link
-        to={hasChildren ? "#" : to}
-        onClick={toggleSubmenu}
+        to={hasChildren ? "#" : item.to}
+        onClick={(e) => {
+          if (hasChildren) {
+            e.preventDefault();
+            setOpen(!open);
+          } else onClose?.();
+        }}
         className={`
-          flex items-center px-4 py-2.5 text-sm font-medium rounded-md w-full
-          transition-colors duration-200
+          flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium
+          transition-all duration-150 group w-full no-underline
           ${
-            active && !hasChildren
-              ? "bg-blue-100 text-blue-700"
-              : "text-gray-700 hover:bg-gray-100"
+            isActive && !hasChildren
+              ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
           }
         `}
       >
-        <span className="mr-3 text-lg">{icon}</span>
-        <span className="flex-1">{label}</span>
+        {/* Icon */}
+        <span
+          className={`flex-shrink-0 ${isActive && !hasChildren ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`}
+        >
+          {item.icon}
+        </span>
+
+        {/* Label */}
+        <span className="flex-1">{item.label}</span>
+
+        {/* Badge */}
+        {item.badge && (
+          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+            {item.badge}
+          </span>
+        )}
+
+        {/* Arrow */}
         {hasChildren && (
-          <span className="ml-auto">
-            {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <span
+            className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          >
+            <ChevronDown size={14} />
           </span>
         )}
       </Link>
 
-      {hasChildren && isOpen && (
-        <div className="ml-10 mt-1 space-y-1">
-          {children.map((child, index) => (
+      {/* Children */}
+      {hasChildren && open && (
+        <div className="ml-4 mt-1 pl-4 border-l-2 border-gray-100 space-y-0.5">
+          {item.children!.map((child) => (
             <Link
-              key={index}
+              key={child.to}
               to={child.to}
+              onClick={onClose}
               className={`
-                block px-3 py-2 text-sm font-medium rounded-md
+                block px-3 py-2 text-[12px] font-medium rounded-lg transition-colors no-underline
                 ${
                   location.pathname === child.to
-                    ? "text-blue-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    ? "text-blue-600 bg-blue-50 font-semibold"
+                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
                 }
               `}
             >
-              {child.label}
+              <span className="flex items-center gap-2">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    location.pathname === child.to
+                      ? "bg-blue-500"
+                      : "bg-gray-300"
+                  }`}
+                />
+                {child.label}
+              </span>
             </Link>
           ))}
         </div>
@@ -86,147 +206,118 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   );
 };
 
+// ── Sidebar Content ──
+const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
+  <div className="flex flex-col h-full bg-white">
+    {/* Logo */}
+    <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100 flex-shrink-0">
+      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-base shadow-sm">
+        🏙️
+      </div>
+      <div className="flex flex-col leading-tight">
+        <span className="text-[15px] font-bold text-gray-900 tracking-tight">
+          My Barisal
+        </span>
+        <span className="text-[10px] font-semibold text-blue-500 tracking-wider uppercase">
+          Admin Panel
+        </span>
+      </div>
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="ml-auto w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+        >
+          <X size={16} />
+        </button>
+      )}
+    </div>
+
+    {/* Nav */}
+    <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+      {/* Section Label */}
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mb-2">
+        মূল মেনু
+      </p>
+
+      {navigation.slice(0, 1).map((item) => (
+        <NavItem key={item.to} item={item} onClose={onClose} />
+      ))}
+
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
+        সেবাসমূহ
+      </p>
+
+      {navigation.slice(1, 8).map((item) => (
+        <NavItem key={item.to} item={item} onClose={onClose} />
+      ))}
+
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
+        সিস্টেম
+      </p>
+
+      {navigation.slice(8).map((item) => (
+        <NavItem key={item.to} item={item} onClose={onClose} />
+      ))}
+    </nav>
+
+    {/* Bottom */}
+    <div className="px-3 py-4 border-t border-gray-100 space-y-1 flex-shrink-0">
+      {/* View Site */}
+      <Link
+        to="/"
+        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors no-underline"
+      >
+        <Home size={18} className="text-gray-400" />
+        <span>সাইট দেখুন</span>
+      </Link>
+
+      {/* Logout */}
+      <button
+        onClick={() => {
+          // dispatch(logout());
+        }}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-red-500 hover:bg-red-50 transition-colors"
+      >
+        <LogOut size={18} />
+        <span>লগআউট</span>
+      </button>
+    </div>
+  </div>
+);
+
+// ── Main Sidebar ──
 interface SidebarProps {
-  isMobile: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isMobile, isOpen, onClose }) => {
-  const location = useLocation();
+const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+  return (
+    <>
+      {/* ── Desktop ── */}
+      <aside className="hidden md:flex flex-col w-64 flex-shrink-0 border-r border-gray-100 shadow-sm">
+        <SidebarContent />
+      </aside>
 
-  const navigation = [
-    {
-      to: "/dashboard/admin-home",
-      icon: <LayoutDashboard size={20} />,
-      label: "Dashboard",
-    },
-    {
-      to: "/dashboard/products",
-      icon: <Package size={20} />,
-      label: "Products",
-      children: [
-        { to: "/dashboard/products", label: "All Products" },
-        { to: "/dashboard/products/add-product", label: "Add Product" },
-      ],
-    },
-    {
-      to: "/dashboard/categories",
-      icon: <Package size={20} />,
-      label: "Categories",
-      children: [
-        { to: "/dashboard/categories", label: "All Categories" },
-        { to: "/dashboard/categories/add-category", label: "Add Category" },
-      ],
-    },
-    {
-      to: "/dashboard/orders",
-      icon: <ShoppingCart size={20} />,
-      label: "Orders",
-    },
-    {
-      to: "/dashboard/users",
-      icon: <Users size={20} />,
-      label: "Customers",
-    },
-    {
-      to: "/analytics",
-      icon: <BarChart size={20} />,
-      label: "Analytics",
-    },
-    {
-      to: "/dashboard/All-admin",
-      icon: <Users2 size={20} />,
-      label: "All Admin",
-    },
-    {
-      to: "/",
-      icon: <Home size={20} />,
-      label: "Home",
-    },
-  ];
-
-  // If on mobile, render a responsive sidebar
-  if (isMobile) {
-    return (
-      <div
-        className={`
-        fixed inset-0 z-40 flex transform transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-      `}
-      >
-        {/* Overlay */}
+      {/* ── Mobile Overlay ── */}
+      {isOpen && (
         <div
-          className={`
-            fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity duration-300
-            ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}
-          `}
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
           onClick={onClose}
         />
+      )}
 
-        {/* Sidebar */}
-        <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
-          <div className="absolute top-0 right-0 -mr-12 pt-2">
-            <button
-              className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-              onClick={onClose}
-            >
-              <span className="sr-only">Close sidebar</span>
-              <X size={24} className="text-white" />
-            </button>
-          </div>
-
-          <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-            <div className="flex-shrink-0 flex items-center px-4">
-              <Link to="/dashboard/admin-home">
-                <h1 className="text-xl font-bold text-blue-600">E-Shop</h1>
-              </Link>
-            </div>
-            <nav className="mt-5 px-2 space-y-1">
-              {navigation.map((item) => (
-                <SidebarLink
-                  key={item.to}
-                  to={item.to}
-                  icon={item.icon}
-                  label={item.label}
-                  active={location.pathname === item.to}
-                  children={item.children}
-                />
-              ))}
-            </nav>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Desktop sidebar
-  return (
-    <div className="hidden md:flex md:flex-shrink-0">
-      <div className="flex flex-col w-64">
-        <div className="flex flex-col h-0 flex-1">
-          <div className="flex items-center h-16 flex-shrink-0 px-4 bg-white border-b border-gray-200">
-            <Link to="/dashboard/admin-home">
-              <h1 className="text-xl font-bold text-blue-600">E-Shop</h1>
-            </Link>
-          </div>
-          <div className="flex-1 flex flex-col overflow-y-auto">
-            <nav className="flex-1 px-3 py-4 bg-white space-y-1">
-              {navigation.map((item) => (
-                <SidebarLink
-                  key={item.to}
-                  to={item.to}
-                  icon={item.icon}
-                  label={item.label}
-                  active={location.pathname === item.to}
-                  children={item.children}
-                />
-              ))}
-            </nav>
-          </div>
-        </div>
-      </div>
-    </div>
+      {/* ── Mobile Drawer ── */}
+      <aside
+        className={`
+          fixed top-0 left-0 h-full w-72 z-50 shadow-2xl
+          transform transition-transform duration-300 ease-in-out md:hidden
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+      >
+        <SidebarContent onClose={onClose} />
+      </aside>
+    </>
   );
 };
 
