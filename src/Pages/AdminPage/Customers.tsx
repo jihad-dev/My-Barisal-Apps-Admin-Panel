@@ -45,7 +45,7 @@ const Users = () => {
   const [search, setSearch]           = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter]   = useState("all");
-  const [page, setPage]               = useState(1);
+  const [page, setPage]    = useState(1);
 
   const { data, isLoading } = useGetAllUsersQuery(undefined, {
     refetchOnMountOrArgChange: true,

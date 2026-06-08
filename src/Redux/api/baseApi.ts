@@ -12,7 +12,7 @@ import { logout, setUser } from "../features/auth/authSlice";
 import { RootState } from "../store"; // Assuming your RootState is exported from here
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: "http://localhost:5000/api/v1",
+  baseUrl: "https://my-barisal-apps-api-backend.vercel.app/api/v1",
   credentials: "include",
   prepareHeaders: (headers, { getState }) => {
     // Add { getState } parameter
@@ -39,7 +39,7 @@ const baseQueryWithRefreshToken: BaseQueryFn<
   }
   if (result?.error?.status === 401) {
     const res = await fetch(
-      "http://localhost:5000/api/v1/auth/refresh-token",
+      "https://my-barisal-apps-api-backend.vercel.app/api/v1/auth/refresh-token",
       {
         method: "POST",
         credentials: "include",
@@ -71,6 +71,6 @@ const baseQueryWithRefreshToken: BaseQueryFn<
 export const baseApi = createApi({
   reducerPath: "baseApi",
   baseQuery: baseQueryWithRefreshToken,
-  tagTypes: ["admins", "users", "categories", "products", "cart", "orders"],
+  tagTypes: ["admins", "users", "categories", "hospitals", "cart", "orders","lawyers"],
   endpoints: () => ({}),
 });

@@ -14,6 +14,11 @@ import AllAdmin from "../Pages/AdminPage/AllAdmin";
 import CreateAdmin from "../Pages/AdminPage/CreateAdmin";
 import ViewAdminInfo from "../Pages/AdminPage/ViewAdminInfo";
 import Unauthorized from "../utils/Unauthorized";
+import AllHospitals from "../Pages/AdminPage/AllHospital";
+import AllAmbulances from "../Pages/AdminPage/AllAmbulance";
+import AddHospital from "../Pages/AdminPage/AddHospital";
+import AllLayers from "../Pages/AdminPage/AllLayers";
+import AddLawyerPage from "../Pages/AdminPage/AddLawyerPage";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -30,52 +35,122 @@ export const router = createBrowserRouter([
       },
       {
         path: "/profile",
-        element: <PrivateRoute><Profile /></PrivateRoute>,
-      }
-      
-    ]
+        element: (
+          <PrivateRoute>
+            <Profile />
+          </PrivateRoute>
+        ),
+      },
+    ],
   },
   {
     path: "/dashboard",
     element: (
       <PrivateRoute allowedRoles={["admin"]}>
-        <Dashboard/>
+        <Dashboard />
       </PrivateRoute>
     ),
     children: [
       {
-        path:"/dashboard/admin-home",
-        element:<PrivateRoute allowedRoles={["admin"]}><AdminHome/></PrivateRoute>
+        path: "/dashboard/admin-home",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AdminHome />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-hospitals",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AllHospitals />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/hospitals/add",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AddHospital />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-lawyers",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AllLayers />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/add-lawyer",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AddLawyerPage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-ambulances",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AllAmbulances />
+          </PrivateRoute>
+        ),
       },
       {
         path: "/dashboard/users",
-        element: <PrivateRoute allowedRoles={["admin"]}><Customers/></PrivateRoute>
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <Customers />
+          </PrivateRoute>
+        ),
       },
       {
         path: "/dashboard/users/:id",
-        element: <PrivateRoute allowedRoles={["admin"]}><ViewUserInfo/></PrivateRoute>
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <ViewUserInfo />
+          </PrivateRoute>
+        ),
       },
       {
         path: "/dashboard/users/change-status/:id",
-        element: <PrivateRoute allowedRoles={["admin"]}><ChangeStatus/></PrivateRoute>
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <ChangeStatus />
+          </PrivateRoute>
+        ),
       },
       {
         path: "/dashboard/All-admin",
-        element: <PrivateRoute allowedRoles={["admin"]}><AllAdmin/></PrivateRoute>
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AllAdmin />
+          </PrivateRoute>
+        ),
       },
       {
         path: "/dashboard/admin/create-admin",
-        element: <PrivateRoute allowedRoles={["admin"]}><CreateAdmin/></PrivateRoute>
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <CreateAdmin />
+          </PrivateRoute>
+        ),
       },
       {
         path: "/dashboard/admin/admin-info/:id",
-        element: <PrivateRoute allowedRoles={["admin"]}><ViewAdminInfo/></PrivateRoute>
-      }
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <ViewAdminInfo />
+          </PrivateRoute>
+        ),
+      },
     ],
   },
   {
     path: "/unauthorized",
     element: <Unauthorized />,
-  }
+  },
 ]);
-

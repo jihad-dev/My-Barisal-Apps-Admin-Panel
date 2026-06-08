@@ -13,11 +13,9 @@ import {
   Newspaper,
   School,
   Phone,
-  Settings,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
-
-import { logout } from "../../Redux/features/auth/authSlice";
 
 // ── Types ──
 interface TChild {
@@ -44,7 +42,7 @@ const navigation: TNavItem[] = [
     icon: <Hospital size={18} />,
     label: "হাসপাতাল",
     children: [
-      { to: "/dashboard/hospitals", label: "সব হাসপাতাল" },
+      { to: "/dashboard/all-hospitals", label: "সব হাসপাতাল" },
       { to: "/dashboard/hospitals/add", label: "নতুন যোগ করুন" },
     ],
   },
@@ -53,7 +51,7 @@ const navigation: TNavItem[] = [
     icon: <Truck size={18} />,
     label: "অ্যাম্বুলেন্স",
     children: [
-      { to: "/dashboard/ambulances", label: "সব অ্যাম্বুলেন্স" },
+      { to: "/dashboard/all-ambulances", label: "সব অ্যাম্বুলেন্স" },
       { to: "/dashboard/ambulances/add", label: "নতুন যোগ করুন" },
     ],
   },
@@ -62,8 +60,8 @@ const navigation: TNavItem[] = [
     icon: <Scale size={18} />,
     label: "আইনজীবী",
     children: [
-      { to: "/dashboard/lawyers", label: "সব আইনজীবী" },
-      { to: "/dashboard/lawyers/add", label: "নতুন যোগ করুন" },
+      { to: "/dashboard/all-lawyers", label: "সব আইনজীবী" },
+      { to: "/dashboard/add-lawyer", label: "নতুন যোগ করুন" },
     ],
   },
   {
@@ -104,10 +102,10 @@ const navigation: TNavItem[] = [
     label: "ব্যবহারকারী",
   },
   {
-    to: "/dashboard/settings",
-    icon: <Settings size={18} />,
-    label: "সেটিংস",
-  },
+    to: "/dashboard/all-admin",
+    icon: <ShieldCheck size={18} />,
+    label: "All Admin",
+  }
 ];
 
 // ── Single Nav Item ──
