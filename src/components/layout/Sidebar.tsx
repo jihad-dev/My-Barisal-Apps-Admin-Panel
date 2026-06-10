@@ -15,6 +15,11 @@ import {
   Phone,
   LogOut,
   ShieldCheck,
+  Flame,
+  Car,
+  Droplet,
+  Moon,
+  Stethoscope,
 } from "lucide-react";
 
 // ── Types ──
@@ -31,6 +36,8 @@ interface TNavItem {
 }
 
 // ── Nav Items ──
+
+// ── Nav Items (সবগুলো মিসিং আইটেম সহ সম্পূর্ণ অ্যারে) ──
 const navigation: TNavItem[] = [
   {
     to: "/dashboard/admin-home",
@@ -44,6 +51,15 @@ const navigation: TNavItem[] = [
     children: [
       { to: "/dashboard/all-hospitals", label: "সব হাসপাতাল" },
       { to: "/dashboard/hospitals/add", label: "নতুন যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/doctors",
+    icon: <Stethoscope size={18} className="text-emerald-500" />, // ডাক্তারদের জন্য প্রফেশনাল স্ট্রেথোস্কোপ আইকন
+    label: "ডাক্তার",
+    children: [
+      { to: "/dashboard/all-doctors", label: "সব ডাক্তার" },
+      { to: "/dashboard/doctors/add", label: "নতুন যোগ করুন" },
     ],
   },
   {
@@ -66,11 +82,56 @@ const navigation: TNavItem[] = [
   },
   {
     to: "/dashboard/notable",
-    icon: <Star size={18} />,
+    icon: <Star className="text-green-400" size={18} />,
     label: "গুণীজন",
     children: [
       { to: "/dashboard/notable", label: "সব গুণীজন" },
       { to: "/dashboard/notable/add", label: "নতুন যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/police",
+    icon: <ShieldCheck size={18} className="text-blue-600" />,
+    label: "পুলিশ প্রশাসন",
+    children: [
+      { to: "/dashboard/police", label: "সব থানা/স্টেশন" },
+      { to: "/dashboard/police/add", label: "নতুন থানা যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/fire-service",
+    icon: <Flame size={18} className="text-orange-500" />,
+    label: "অগ্নি পরিষেবা",
+    children: [
+      { to: "/dashboard/fire-service", label: "সব স্টেশন তালিকা" },
+      { to: "/dashboard/fire-service/add", label: "নতুন স্টেশন যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/imams",
+    icon: <Moon size={18} className="text-teal-500" />, // ধর্মীয় ও ইমামদের জন্য চাঁদ আইকন
+    label: "ইমাম ও খতিব",
+    children: [
+      { to: "/dashboard/imams", label: "সব ইমাম তালিকা" },
+      { to: "/dashboard/imams/add", label: "নতুন ইমাম যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/cars",
+    icon: <Car size={18} className="text-slate-500" />, // গাড়ি/রেন্ট-এ-কারের জন্য কার আইকন
+    label: "গাড়ি / রেন্ট-এ-কার",
+    children: [
+      { to: "/dashboard/cars", label: "সব গাড়ি" },
+      { to: "/dashboard/cars/add", label: "নতুন গাড়ি যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/blood-donors",
+    icon: <Droplet size={18} className="text-rose-500" />, // রক্তদাতার জন্য চমৎকার ড্রপলেট আইকন
+    label: "রক্তের গ্রুপ/দাতা",
+    children: [
+      { to: "/dashboard/blood-donors", label: "সব রক্তদাতা" },
+      { to: "/dashboard/blood-donors/add", label: "নতুন দাতা যোগ করুন" },
     ],
   },
   {
@@ -105,9 +166,8 @@ const navigation: TNavItem[] = [
     to: "/dashboard/all-admin",
     icon: <ShieldCheck size={18} />,
     label: "All Admin",
-  }
+  },
 ];
-
 // ── Single Nav Item ──
 const NavItem = ({
   item,
@@ -249,13 +309,14 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
         <NavItem key={item.to} item={item} onClose={onClose} />
       ))}
 
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
+     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
         সিস্টেম
       </p>
 
       {navigation.slice(8).map((item) => (
         <NavItem key={item.to} item={item} onClose={onClose} />
       ))}
+       
     </nav>
 
     {/* Bottom */}

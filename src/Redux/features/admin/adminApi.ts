@@ -15,6 +15,13 @@ const adminApi = baseApi.injectEndpoints({
          }),
          providesTags: ['hospitals'],
       }),
+      getAllDoctors: builder.query({
+         query: () => ({
+            url: '/doctors',
+            method: 'GET',
+         }),
+         providesTags: ['doctors'],
+      }),
       addHospital: builder.mutation({
          query: (newHospital: any) => ({
             url: '/hospitals/create-hospital',
@@ -105,4 +112,4 @@ const adminApi = baseApi.injectEndpoints({
    })
 })
 
-export const { useGetAllUsersQuery, useChangeStatusMutation, useCreateAdminMutation, useGetSingleAdminQuery, useDeleteAdminMutation, useDeleteUserMutation, useGetAllAdminsQuery, useGetAllHospitalsQuery, useGetAllAmbulanceQuery, useAddHospitalMutation, useGetAllLawyersQuery, useCreateLawyerMutation } = adminApi;
+export const { useGetAllUsersQuery, useChangeStatusMutation, useCreateAdminMutation, useGetSingleAdminQuery, useDeleteAdminMutation, useDeleteUserMutation, useGetAllAdminsQuery, useGetAllHospitalsQuery, useGetAllAmbulanceQuery, useAddHospitalMutation, useGetAllLawyersQuery, useCreateLawyerMutation , useGetAllDoctorsQuery} = adminApi;

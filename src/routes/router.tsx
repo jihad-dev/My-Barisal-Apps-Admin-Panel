@@ -19,6 +19,7 @@ import AllAmbulances from "../Pages/AdminPage/AllAmbulance";
 import AddHospital from "../Pages/AdminPage/AddHospital";
 import AllLayers from "../Pages/AdminPage/AllLayers";
 import AddLawyerPage from "../Pages/AdminPage/AddLawyerPage";
+import AllDoctors from "../Pages/AdminPage/AllDoctors";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -64,6 +65,14 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute allowedRoles={["admin"]}>
             <AllHospitals />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-doctors",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AllDoctors />
           </PrivateRoute>
         ),
       },

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 // আপনার প্রোজেক্টের পাথ অনুযায়ী ইম্পোর্ট ঠিক করে নিন
 import { useGetAllLawyersQuery } from "../../Redux/features/admin/adminApi";
+import { Link } from "react-router-dom";
 
 // TypeScript Interface
 interface Lawyer {
@@ -34,7 +35,7 @@ export default function LawyersDashboardPage() {
     refetch,
   } = useGetAllLawyersQuery(undefined);
   const [searchTerm, setSearchTerm] = useState<string>("");
-console.log(apiResponse)
+  console.log(apiResponse);
   // ১. এপিআই রেসপন্স হ্যান্ডলিং (ডাটা সরাসরি অ্যারে বা অবজেক্ট ডট ডাটা যেভাবেই আসুক তা সুরক্ষিত করা)
   const lawyers: Lawyer[] = Array.isArray(apiResponse)
     ? apiResponse
@@ -81,9 +82,11 @@ console.log(apiResponse)
           </p>
         </div>
 
-        <button className="flex items-center justify-center gap-2 bg-gradient-to-r from-teal-600 to-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:opacity-95 transition-all transform active:scale-95 w-full md:w-auto">
-          <Plus className="w-4 h-4" /> নতুন আইনজীবী যোগ করুন
-        </button>
+        <Link to="/dashboard/add-lawyer">
+          <button className="flex items-center cursor-pointer justify-center gap-2 bg-gradient-to-r from-teal-600 to-emerald-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm hover:opacity-95 transition-all transform active:scale-95 w-full md:w-auto">
+            <Plus className="w-4 h-4" /> নতুন আইনজীবী যোগ করুন
+          </button>
+        </Link>
       </div>
 
       {/* ─── SEARCH & FILTER BAR (HYPER LOOK) ─── */}

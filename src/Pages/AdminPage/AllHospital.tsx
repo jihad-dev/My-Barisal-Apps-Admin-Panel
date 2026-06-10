@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGetAllHospitalsQuery } from "../../Redux/features/admin/adminApi";
 import Loader from "../../utils/Loader";
+import { Link } from "react-router-dom";
 
 interface Hospital {
   _id: string;
@@ -145,7 +146,6 @@ const headV = {
 const AllHospitals = () => {
   const { data, error, isLoading, isFetching } = useGetAllHospitalsQuery({});
 
-
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   if (isLoading) return <Loader />;
@@ -254,7 +254,9 @@ const AllHospitals = () => {
             className="flex items-center gap-1.5 bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-md shadow-cyan-200 hover:shadow-lg hover:shadow-cyan-200 transition-shadow"
           >
             <IcoPlus />
-            <span className="hidden sm:inline">নতুন</span>
+            <Link to="/dashboard/hospitals/add">
+              <span className="hidden sm:inline">নতুন</span>
+            </Link>
           </motion.button>
         </div>
       </motion.div>
