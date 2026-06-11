@@ -127,7 +127,7 @@ const AllDoctors = () => {
             </p>
           </div>
           <Link
-            to="/dashboard/doctors/add"
+            to="/dashboard/add-doctor"
             className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm no-underline self-start sm:self-center"
           >
             <FiPlus size={16} />

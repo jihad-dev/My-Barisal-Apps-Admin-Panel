@@ -20,6 +20,7 @@ import AddHospital from "../Pages/AdminPage/AddHospital";
 import AllLayers from "../Pages/AdminPage/AllLayers";
 import AddLawyerPage from "../Pages/AdminPage/AddLawyerPage";
 import AllDoctors from "../Pages/AdminPage/AllDoctors";
+import AddDoctor from "../Pages/AdminPage/AddDoctor";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -73,6 +74,14 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute allowedRoles={["admin"]}>
             <AllDoctors />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/add-doctor",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AddDoctor />
           </PrivateRoute>
         ),
       },

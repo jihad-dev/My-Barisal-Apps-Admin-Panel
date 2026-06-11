@@ -1,63 +1,75 @@
+
 import { baseApi } from "../../api/baseApi";
-
-
+import { EndpointBuilder } from "@reduxjs/toolkit/query";
+interface ApiResponse<T = any> {
+   success: boolean;
+   message?: string;
+   data?: T;
+}
 const adminApi = baseApi.injectEndpoints({
-   endpoints: (builder: any) => ({
-      getAllUsers: builder.query({
-         query: () => '/users/all-user',
-         method: 'GET',
+   // এখানে builder-এর সঠিক টাইপ অ্যাসাইন করা হয়েছে (any-র পরিবর্তে)
+   endpoints: (builder: EndpointBuilder<any, any, any>) => ({
+      getAllUsers: builder.query<any, void>({
+         query: () => ({
+            url: '/users/all-user',
+            method: 'GET',
+         }),
          providesTags: ['users']
       }),
-      getAllHospitals: builder.query({
+      getAllHospitals: builder.query<any, void>({
          query: () => ({
             url: '/hospitals',
             method: 'GET',
          }),
          providesTags: ['hospitals'],
       }),
-      getAllDoctors: builder.query({
+      getAllDoctors: builder.query<any, void>({
          query: () => ({
             url: '/doctors',
             method: 'GET',
          }),
          providesTags: ['doctors'],
       }),
-      addHospital: builder.mutation({
+      // এখন আর এখানে কোনো TS এরর আসবে না 🎉
+      addDoctor: builder.mutation<ApiResponse, any>({
+         query: (newDoctor: any) => ({
+            url: '/doctors/add-doctor',
+            method: 'POST',
+            body: newDoctor,
+         }),
+         invalidatesTags: ['doctors'],
+      }),
+      addHospital: builder.mutation<ApiResponse, any>({
          query: (newHospital: any) => ({
             url: '/hospitals/create-hospital',
             method: 'POST',
             body: newHospital,
          }),
-
          invalidatesTags: ['hospitals'],
       }),
-      // ট্যাগ টাইপস-এ 'lawyers' যুক্ত করতে ভুলবেন না
-      getAllLawyers: builder.query({
+      getAllLawyers: builder.query<any, void>({
          query: () => ({
             url: '/lawyers',
             method: 'GET',
          }),
          providesTags: [{ type: 'lawyers', id: 'LIST' }],
       }),
-
-      // ২. নতুন আইনজীবী তৈরি করার মিউটেশন
-      createLawyer: builder.mutation({
-         query: (newLawyer) => ({
+      createLawyer: builder.mutation<ApiResponse, any>({
+         query: (newLawyer: any) => ({
             url: '/lawyers/add-lawyer',
             method: 'POST',
             body: newLawyer,
          }),
-         // এটি ট্রিগার হওয়ার সাথে সাথে উপরের getAllLawyers কুয়েরিটি অটোমেটিক রি-রান হবে
          invalidatesTags: [{ type: 'lawyers', id: 'LIST' }],
       }),
-      getAllAmbulance: builder.query({
+      getAllAmbulance: builder.query<any, void>({
          query: () => ({
             url: '/ambulances',
             method: 'GET',
          }),
-         providesTags: [''],
+         providesTags: ['ambulances'],
       }),
-      getAllAdmins: builder.query({
+      getAllAdmins: builder.query<any, void>({
          query: () => ({
             url: '/users/all-admin',
             method: 'GET',
@@ -65,7 +77,7 @@ const adminApi = baseApi.injectEndpoints({
          providesTags: ['admins'],
          transformResponse: (response: any) => response?.data,
       }),
-      changeStatus: builder.mutation({
+      changeStatus: builder.mutation<ApiResponse, { id: string; status: string }>({
          query: (data: { id: string, status: string }) => ({
             url: `/users/status/${data?.id}`,
             method: 'PATCH',
@@ -75,8 +87,7 @@ const adminApi = baseApi.injectEndpoints({
          }),
          invalidatesTags: ['users']
       }),
-      //create admin
-      createAdmin: builder.mutation({
+      createAdmin: builder.mutation<ApiResponse, any>({
          query: (data: any) => ({
             url: '/users/create-user',
             method: 'POST',
@@ -84,32 +95,43 @@ const adminApi = baseApi.injectEndpoints({
          }),
          invalidatesTags: ['admins']
       }),
-      //get single admin
-      getSingleAdmin: builder.query({
+      getSingleAdmin: builder.query<any, string>({
          query: (id: string) => ({
             url: `/users/admin/${id}`,
             method: 'GET',
          }),
          providesTags: ['admins']
       }),
-      //delete admin
-      deleteAdmin: builder.mutation({
+      deleteAdmin: builder.mutation<ApiResponse, string>({
          query: (id: string) => ({
             url: `/users/admin/${id}`,
             method: 'DELETE',
          }),
          invalidatesTags: ['admins']
       }),
-      //delete user
-      deleteUser: builder.mutation({
+      deleteUser: builder.mutation<ApiResponse, string>({
          query: (id: string) => ({
             url: `/users/${id}`,
             method: 'DELETE',
          }),
          invalidatesTags: ['users']
       })
-
    })
-})
+});
 
-export const { useGetAllUsersQuery, useChangeStatusMutation, useCreateAdminMutation, useGetSingleAdminQuery, useDeleteAdminMutation, useDeleteUserMutation, useGetAllAdminsQuery, useGetAllHospitalsQuery, useGetAllAmbulanceQuery, useAddHospitalMutation, useGetAllLawyersQuery, useCreateLawyerMutation , useGetAllDoctorsQuery} = adminApi;
+export const {
+   useGetAllUsersQuery,
+   useChangeStatusMutation,
+   useCreateAdminMutation,
+   useGetSingleAdminQuery,
+   useDeleteAdminMutation,
+   useDeleteUserMutation,
+   useGetAllAdminsQuery,
+   useGetAllHospitalsQuery,
+   useGetAllAmbulanceQuery,
+   useAddHospitalMutation,
+   useGetAllLawyersQuery,
+   useCreateLawyerMutation,
+   useGetAllDoctorsQuery,
+   useAddDoctorMutation
+} = adminApi;

@@ -59,7 +59,7 @@ const navigation: TNavItem[] = [
     label: "ডাক্তার",
     children: [
       { to: "/dashboard/all-doctors", label: "সব ডাক্তার" },
-      { to: "/dashboard/doctors/add", label: "নতুন যোগ করুন" },
+      { to: "/dashboard/add-doctor", label: "নতুন যোগ করুন" },
     ],
   },
   {
