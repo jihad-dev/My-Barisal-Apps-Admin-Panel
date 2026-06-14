@@ -69,6 +69,38 @@ const adminApi = baseApi.injectEndpoints({
          }),
          providesTags: ['ambulances'],
       }),
+      addAmbulance: builder.mutation<any, any>({
+         query: (newAmbulance) => ({
+            url: '/ambulances/add-ambulance',
+            method: 'POST',
+            body: newAmbulance,
+         }),
+         invalidatesTags: ['ambulances'],
+      }),
+      getAllDonors: builder.query<any, void>({
+         query: () => '/donars', // আপনার ব্যাকএন্ডের সঠিক রাউট
+         providesTags: ['donars']
+      }),
+      registerDonar: builder.mutation<any, any>({
+         query: (data) => ({
+            url: '/donars/register', // আপনার ব্যাকএন্ডের সঠিক রাউট দিন
+            method: 'POST',
+            body: data,
+         }),
+         invalidatesTags: ['donars']
+      }),
+      getAllPolice: builder.query<any, void>({
+         query: () => '/police', // আপনার ব্যাকএন্ডের সঠিক রাউট
+         providesTags: ['police']
+      }),
+      addPoliceStation: builder.mutation<any, any>({
+         query: (data) => ({
+            url: '/police/add-station', // আপনার ব্যাকএন্ডের সঠিক রাউট দিন
+            method: 'POST',
+            body: data,
+         }),
+         invalidatesTags: ['police']
+      }),
       getAllAdmins: builder.query<any, void>({
          query: () => ({
             url: '/users/all-admin',
@@ -133,5 +165,10 @@ export const {
    useGetAllLawyersQuery,
    useCreateLawyerMutation,
    useGetAllDoctorsQuery,
-   useAddDoctorMutation
+   useAddDoctorMutation,
+   useAddAmbulanceMutation,
+   useGetAllDonorsQuery,
+   useGetAllPoliceQuery,
+   useAddPoliceStationMutation,
+   useRegisterDonarMutation
 } = adminApi;

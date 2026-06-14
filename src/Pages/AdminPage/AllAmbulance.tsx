@@ -69,7 +69,7 @@ const card = {
 };
 
 const AllAmbulances = () => {
-  const { data, isLoading, error } = useGetAllAmbulanceQuery({});
+  const { data, isLoading, error } = useGetAllAmbulanceQuery(undefined);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 

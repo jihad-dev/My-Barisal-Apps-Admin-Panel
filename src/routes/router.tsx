@@ -21,6 +21,11 @@ import AllLayers from "../Pages/AdminPage/AllLayers";
 import AddLawyerPage from "../Pages/AdminPage/AddLawyerPage";
 import AllDoctors from "../Pages/AdminPage/AllDoctors";
 import AddDoctor from "../Pages/AdminPage/AddDoctor";
+import AddAmbulance from "../Pages/AdminPage/AddAmbulance";
+import AllDonars from "../Pages/AdminPage/AllDonars";
+import AllPolice from "../Pages/AdminPage/AllPolice";
+import AddPoliceStation from "../Pages/AdminPage/AddPoliceStation";
+import RegisterDonor from "../Pages/AdminPage/RegisterDonar";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -114,6 +119,46 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute allowedRoles={["admin"]}>
             <AllAmbulances />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-donors",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AllDonars />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/add-donor",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <RegisterDonor />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-police",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AllPolice />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/add-station",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AddPoliceStation />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/add-ambulance",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AddAmbulance />
           </PrivateRoute>
         ),
       },

@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAppDispatch } from "../../Redux/hooks";
+import { logout } from "../../Redux/features/auth/authSlice";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   Users,
@@ -36,8 +39,6 @@ interface TNavItem {
 }
 
 // ── Nav Items ──
-
-// ── Nav Items (সবগুলো মিসিং আইটেম সহ সম্পূর্ণ অ্যারে) ──
 const navigation: TNavItem[] = [
   {
     to: "/dashboard/admin-home",
@@ -55,7 +56,7 @@ const navigation: TNavItem[] = [
   },
   {
     to: "/dashboard/doctors",
-    icon: <Stethoscope size={18} className="text-emerald-500" />, // ডাক্তারদের জন্য প্রফেশনাল স্ট্রেথোস্কোপ আইকন
+    icon: <Stethoscope size={18} className="text-emerald-500" />,
     label: "ডাক্তার",
     children: [
       { to: "/dashboard/all-doctors", label: "সব ডাক্তার" },
@@ -68,7 +69,7 @@ const navigation: TNavItem[] = [
     label: "অ্যাম্বুলেন্স",
     children: [
       { to: "/dashboard/all-ambulances", label: "সব অ্যাম্বুলেন্স" },
-      { to: "/dashboard/ambulances/add", label: "নতুন যোগ করুন" },
+      { to: "/dashboard/add-ambulance", label: "নতুন যোগ করুন" },
     ],
   },
   {
@@ -94,8 +95,8 @@ const navigation: TNavItem[] = [
     icon: <ShieldCheck size={18} className="text-blue-600" />,
     label: "পুলিশ প্রশাসন",
     children: [
-      { to: "/dashboard/police", label: "সব থানা/স্টেশন" },
-      { to: "/dashboard/police/add", label: "নতুন থানা যোগ করুন" },
+      { to: "/dashboard/all-police", label: "সব থানা/স্টেশন" },
+      { to: "/dashboard/add-station", label: "নতুন থানা যোগ করুন" },
     ],
   },
   {
@@ -109,7 +110,7 @@ const navigation: TNavItem[] = [
   },
   {
     to: "/dashboard/imams",
-    icon: <Moon size={18} className="text-teal-500" />, // ধর্মীয় ও ইমামদের জন্য চাঁদ আইকন
+    icon: <Moon size={18} className="text-teal-500" />,
     label: "ইমাম ও খতিব",
     children: [
       { to: "/dashboard/imams", label: "সব ইমাম তালিকা" },
@@ -118,20 +119,20 @@ const navigation: TNavItem[] = [
   },
   {
     to: "/dashboard/cars",
-    icon: <Car size={18} className="text-slate-500" />, // গাড়ি/রেন্ট-এ-কারের জন্য কার আইকন
-    label: "গাড়ি / রেন্ট-এ-কার",
+    icon: <Car size={18} className="text-slate-500" />,
+    label: "গাড়ি / রেন্ট-এ-কার",
     children: [
-      { to: "/dashboard/cars", label: "সব গাড়ি" },
-      { to: "/dashboard/cars/add", label: "নতুন গাড়ি যোগ করুন" },
+      { to: "/dashboard/cars", label: "সব গাড়ি" },
+      { to: "/dashboard/cars/add", label: "নতুন গাড়ি যোগ করুন" },
     ],
   },
   {
     to: "/dashboard/blood-donors",
-    icon: <Droplet size={18} className="text-rose-500" />, // রক্তদাতার জন্য চমৎকার ড্রপলেট আইকন
+    icon: <Droplet size={18} className="text-rose-500" />,
     label: "রক্তের গ্রুপ/দাতা",
     children: [
-      { to: "/dashboard/blood-donors", label: "সব রক্তদাতা" },
-      { to: "/dashboard/blood-donors/add", label: "নতুন দাতা যোগ করুন" },
+      { to: "/dashboard/all-donors", label: "সব রক্তদাতা" },
+      { to: "/dashboard/add-donor", label: "নতুন দাতা যোগ করুন" },
     ],
   },
   {
@@ -168,6 +169,7 @@ const navigation: TNavItem[] = [
     label: "All Admin",
   },
 ];
+
 // ── Single Nav Item ──
 const NavItem = ({
   item,
@@ -202,24 +204,20 @@ const NavItem = ({
           }
         `}
       >
-        {/* Icon */}
         <span
           className={`flex-shrink-0 ${isActive && !hasChildren ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`}
         >
           {item.icon}
         </span>
 
-        {/* Label */}
         <span className="flex-1">{item.label}</span>
 
-        {/* Badge */}
         {item.badge && (
           <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
             {item.badge}
           </span>
         )}
 
-        {/* Arrow */}
         {hasChildren && (
           <span
             className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
@@ -229,7 +227,6 @@ const NavItem = ({
         )}
       </Link>
 
-      {/* Children */}
       {hasChildren && open && (
         <div className="ml-4 mt-1 pl-4 border-l-2 border-gray-100 space-y-0.5">
           {item.children!.map((child) => (
@@ -265,84 +262,93 @@ const NavItem = ({
 };
 
 // ── Sidebar Content ──
-const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
-  <div className="flex flex-col h-full bg-white">
-    {/* Logo */}
-    <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100 flex-shrink-0">
-      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-base shadow-sm">
-        🏙️
+const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  // লগআউট হ্যান্ডলার ফাংশন
+  const handleLogout = () => {
+    dispatch(logout()); // ১. রিডাক্স স্টেট ক্লিয়ার করা
+    toast.success("সফলভাবে লগআউট করা হয়েছে"); // ২. নোটিফিকেশন
+    if (onClose) onClose(); // ৩. মোবাইল ড্রয়ার ওপেন থাকলে ক্লোজ করা
+    navigate("/login"); // ৪. লগইন পেজে রিডাইরেক্ট
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-white">
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100 flex-shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-base shadow-sm">
+          🏙️
+        </div>
+        <div className="flex flex-col leading-tight">
+          <span className="text-[15px] font-bold text-gray-900 tracking-tight">
+            My Barisal
+          </span>
+          <span className="text-[10px] font-semibold text-blue-500 tracking-wider uppercase">
+            Admin Panel
+          </span>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="ml-auto w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
-      <div className="flex flex-col leading-tight">
-        <span className="text-[15px] font-bold text-gray-900 tracking-tight">
-          My Barisal
-        </span>
-        <span className="text-[10px] font-semibold text-blue-500 tracking-wider uppercase">
-          Admin Panel
-        </span>
-      </div>
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="ml-auto w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mb-2">
+          মূল মেনু
+        </p>
+
+        {navigation.slice(0, 1).map((item) => (
+          <NavItem key={item.to} item={item} onClose={onClose} />
+        ))}
+
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
+          সেবাসমূহ
+        </p>
+
+        {navigation.slice(1, 13).map((item) => (
+          <NavItem key={item.to} item={item} onClose={onClose} />
+        ))}
+
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
+          সিস্টেম
+        </p>
+
+        {navigation.slice(13).map((item) => (
+          <NavItem key={item.to} item={item} onClose={onClose} />
+        ))}
+      </nav>
+
+      {/* Bottom Actions */}
+      <div className="px-3 py-4 border-t border-gray-100 space-y-1 flex-shrink-0">
+        {/* View Site */}
+        <Link
+          to="/"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors no-underline"
         >
-          <X size={16} />
+          <Home size={18} className="text-gray-400" />
+          <span>সাইট দেখুন</span>
+        </Link>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-red-500 hover:bg-red-50 cursor-pointer transition-colors"
+        >
+          <LogOut size={18} />
+          <span>লগআউট</span>
         </button>
-      )}
+      </div>
     </div>
-
-    {/* Nav */}
-    <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-      {/* Section Label */}
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mb-2">
-        মূল মেনু
-      </p>
-
-      {navigation.slice(0, 1).map((item) => (
-        <NavItem key={item.to} item={item} onClose={onClose} />
-      ))}
-
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
-        সেবাসমূহ
-      </p>
-
-      {navigation.slice(1, 8).map((item) => (
-        <NavItem key={item.to} item={item} onClose={onClose} />
-      ))}
-
-     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
-        সিস্টেম
-      </p>
-
-      {navigation.slice(8).map((item) => (
-        <NavItem key={item.to} item={item} onClose={onClose} />
-      ))}
-       
-    </nav>
-
-    {/* Bottom */}
-    <div className="px-3 py-4 border-t border-gray-100 space-y-1 flex-shrink-0">
-      {/* View Site */}
-      <Link
-        to="/"
-        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors no-underline"
-      >
-        <Home size={18} className="text-gray-400" />
-        <span>সাইট দেখুন</span>
-      </Link>
-
-      {/* Logout */}
-      <button
-        onClick={() => {
-          // dispatch(logout());
-        }}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-red-500 hover:bg-red-50 transition-colors"
-      >
-        <LogOut size={18} />
-        <span>লগআউট</span>
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 // ── Main Sidebar ──
 interface SidebarProps {
@@ -354,7 +360,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   return (
     <>
       {/* ── Desktop ── */}
-      <aside className="hidden md:flex flex-col w-64 flex-shrink-0 border-r border-gray-100 shadow-sm">
+      <aside className="hidden md:flex flex-col w-64 flex-shrink-0 border-r border-gray-100 shadow-sm bg-white">
         <SidebarContent />
       </aside>
 
@@ -369,7 +375,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       {/* ── Mobile Drawer ── */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-72 z-50 shadow-2xl
+          fixed top-0 left-0 h-full w-72 z-50 bg-white shadow-2xl
           transform transition-transform duration-300 ease-in-out md:hidden
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}

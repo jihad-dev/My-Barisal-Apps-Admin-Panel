@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+
 import { FiPlus, FiEye, FiTrendingUp, FiActivity } from "react-icons/fi";
 import {
   useGetAllAmbulanceQuery,
@@ -8,6 +9,7 @@ import {
   useGetAllUsersQuery,
 } from "../../Redux/features/admin/adminApi";
 import Loader from "../../utils/Loader";
+import { useAppSelector } from "../../Redux/hooks";
 
 const container = {
   hidden: { opacity: 0 },
@@ -28,7 +30,7 @@ const quickActions = [
   {
     label: "অ্যাম্বুলেন্স যোগ করুন",
     icon: "🚑",
-    to: "/dashboard/ambulances/add",
+    to: "/dashboard/add-ambulance",
     color: "bg-red-50 hover:bg-red-100 text-red-600",
   },
   {
@@ -58,7 +60,7 @@ const quickActions = [
   {
     label: "ডাক্তার যোগ করুন",
     icon: "👨‍⚕️",
-    to: "/dashboard/doctors/add",
+    to: "/dashboard/add-doctor",
     color: "bg-emerald-50 hover:bg-emerald-100 text-emerald-700",
   },
   {
@@ -127,6 +129,7 @@ const recentActivities = [
 ];
 
 const AdminHome = () => {
+  const user = useAppSelector((state) => state.auth.user);
   const { data: hospital, isLoading: isHospitalsLoading } =
     useGetAllHospitalsQuery(undefined);
   const { data: lawyers, isLoading: isLawyersLoading } =
@@ -135,7 +138,7 @@ const AdminHome = () => {
     useGetAllUsersQuery(undefined);
   const { data: ambulances, isLoading: isAmbulancesLoading } =
     useGetAllAmbulanceQuery(undefined);
-
+  console.log(user);
   // Show the loader if any of the major API requests are still loading
   if (
     isHospitalsLoading ||
@@ -146,10 +149,11 @@ const AdminHome = () => {
     return <Loader />;
   }
 
-  const total_hospital = (hospital as { data: any[] })?.data?.length || 0;
-  const total_lawyers = (lawyers as { data: any[] })?.data?.length || 0;
-  const total_users = (users as { data: any[] })?.data?.length || 0;
-  const total_ambulances = (ambulances as { data: any[] })?.data?.length || 0;
+  const total_hospital = (hospital as { data: unknown[] })?.data?.length || 0;
+  const total_lawyers = (lawyers as { data: unknown[] })?.data?.length || 0;
+  const total_users = (users as { data: unknown[] })?.data?.length || 0;
+  const total_ambulances =
+    (ambulances as { data: unknown[] })?.data?.length || 0;
 
   const stats = [
     {
@@ -223,11 +227,76 @@ const AdminHome = () => {
         animate="show"
       >
         {/* Welcome Banner */}
+        
         <motion.div
+          variants={item}
+          className="relative overflow-hidden rounded-3xl bg-slate-900 p-6 sm:p-8 border border-white/10 shadow-2xl shadow-blue-950/20"
+        >
+          {/* 🌟 ব্যাকগ্রাউন্ড ডেকোরেশন (Neon Premium Blobs) */}
+          <div className="absolute top-[-20%] right-[-10%] w-72 h-72 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-full blur-[80px] opacity-40 animate-pulse" />
+          <div className="absolute bottom-[-30%] right-[20%] w-56 h-56 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-full blur-[60px] opacity-30" />
+          <div className="absolute top-[20%] left-[-5%] w-32 h-32 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full blur-[50px] opacity-20" />
+
+          {/* গ্রিড লাইন ওভারলে (প্রিমিয়াম টেকি ফিল আনার জন্য) */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:24px_24px]" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              {/* লাইভ রোল ব্যাজ */}
+              <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-xs font-semibold tracking-wider text-cyan-300 uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                {user?.role || "Super Admin"} Panel
+              </div>
+
+              <div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight mt-1">
+              Welcome to{" "}
+              <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent drop-shadow-sm">
+                My Barisal Apps
+              </span>{" "}
+              Admin Panel💀
+            </h1>
+                <p className="text-slate-300 text-sm sm:text-base font-medium max-w-xl mt-1">
+                  <span className="text-white font-bold">My Barisal</span>{" "}
+                  অ্যাপ্লিকেশনের সকল জরুরি সেবা ও ডাটাবেজ মডিউলসমূহ রিয়েল-টাইমে
+                  পরিচালনা করুন।
+                </p>
+              </div>
+
+              {/* ইউজার ইমেইল কুইক ট্যাগ */}
+              {user?.email && (
+                <div className="text-xs font-mono bg-black/20 inline-block px-2.5 py-1 rounded-md border border-white/5 text-red-600">
+                  Logged in as: {user.email}
+                </div>
+              )}
+            </div>
+
+            {/* প্রিমিয়াম অ্যাকশন বাটনসমূহ */}
+            <div className="flex flex-wrap sm:flex-nowrap gap-3 flex-shrink-0">
+              <Link
+                to="/dashboard/hospitals/add"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-3 rounded-2xl text-sm font-bold hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 no-underline border border-blue-400/20 w-full sm:w-auto"
+              >
+                <FiPlus size={18} className="stroke-[3]" />
+                নতুন ডেটা যোগ করুন
+              </Link>
+
+              <Link
+                to={""}
+        
+                className="flex items-center justify-center gap-2 bg-white/5 text-white border border-white/10 backdrop-blur-md px-5 py-3 rounded-2xl text-sm font-bold hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 no-underline w-full sm:w-auto"
+              >
+                <FiEye size={18} className="text-cyan-400" />
+                লাইভ অ্যাপ দেখুন
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+        {/* <motion.div
           variants={item}
           className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 sm:p-8"
         >
-          {/* Background decoration */}
+          
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
           <div className="absolute bottom-0 right-24 w-40 h-40 bg-white/5 rounded-full translate-y-20" />
 
@@ -261,8 +330,8 @@ const AdminHome = () => {
               </Link>
             </div>
           </div>
-        </motion.div>
 
+        </motion.div> */}
         {/* Stats Grid */}
         <motion.div
           variants={container}
@@ -291,7 +360,6 @@ const AdminHome = () => {
             </motion.div>
           ))}
         </motion.div>
-
         {/* Quick Actions + Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Quick Actions */}
@@ -368,7 +436,6 @@ const AdminHome = () => {
             </div>
           </motion.div>
         </div>
-
         {/* Module Overview */}
         <motion.div
           variants={item}
