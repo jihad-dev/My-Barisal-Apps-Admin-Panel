@@ -109,6 +109,33 @@ const adminApi = baseApi.injectEndpoints({
          providesTags: ['admins'],
          transformResponse: (response: any) => response?.data,
       }),
+      // 🚀 ২. নতুন গাড়ি যোগ করার মিউটেশন (Add Car)
+      addCar: builder.mutation<any, any>({
+         query: (carData) => ({
+            url: '/rent-cars/add-car',
+            method: 'POST',
+            body: carData, 
+         }),
+         
+         invalidatesTags: ['cars'],
+      }),
+      getAllCars: builder.query<any, void>({
+         query: () => ({
+            url: '/rent-cars',
+            method: 'GET',
+         }),
+         providesTags: ['cars'],
+         transformResponse: (response: any) => response?.data,
+      }),
+      // আপনার adminApi স্লাইসের ভেতরে builder.mutation হিসেবে এটি যোগ করুন
+      deleteCar: builder.mutation<any, string>({
+         query: (id) => ({
+            url: `/rent-cars/${id}`,
+            method: 'DELETE',
+         }),
+         // 💡 এই ট্যাগটি ইনভ্যালিডেট করার কারণে ডিলিট হওয়ার সাথে সাথে আপনার টেবিলটি লাইভ রিফ্রেশ হবে!
+         invalidatesTags: ['cars'],
+      }),
       changeStatus: builder.mutation<ApiResponse, { id: string; status: string }>({
          query: (data: { id: string, status: string }) => ({
             url: `/users/status/${data?.id}`,
@@ -170,5 +197,8 @@ export const {
    useGetAllDonorsQuery,
    useGetAllPoliceQuery,
    useAddPoliceStationMutation,
-   useRegisterDonarMutation
+   useRegisterDonarMutation,
+   useGetAllCarsQuery,
+   useDeleteCarMutation,
+   useAddCarMutation
 } = adminApi;

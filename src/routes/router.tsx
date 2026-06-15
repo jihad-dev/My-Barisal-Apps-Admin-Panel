@@ -26,6 +26,8 @@ import AllDonars from "../Pages/AdminPage/AllDonars";
 import AllPolice from "../Pages/AdminPage/AllPolice";
 import AddPoliceStation from "../Pages/AdminPage/AddPoliceStation";
 import RegisterDonor from "../Pages/AdminPage/RegisterDonar";
+import All_Rent_A_Car from "../Pages/AdminPage/All_Rent_A_Car";
+import Add_Rent_A_Car from "../Pages/AdminPage/Add_Rent_A_Car";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -143,6 +145,22 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute allowedRoles={["admin"]}>
             <AllPolice />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-cars",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <All_Rent_A_Car />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/cars/add",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <Add_Rent_A_Car />
           </PrivateRoute>
         ),
       },

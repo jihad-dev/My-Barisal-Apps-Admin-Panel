@@ -122,7 +122,7 @@ const navigation: TNavItem[] = [
     icon: <Car size={18} className="text-slate-500" />,
     label: "গাড়ি / রেন্ট-এ-কার",
     children: [
-      { to: "/dashboard/cars", label: "সব গাড়ি" },
+      { to: "/dashboard/all-cars", label: "সব গাড়ি" },
       { to: "/dashboard/cars/add", label: "নতুন গাড়ি যোগ করুন" },
     ],
   },
