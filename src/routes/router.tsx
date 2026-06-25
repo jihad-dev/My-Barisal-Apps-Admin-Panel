@@ -28,6 +28,10 @@ import AddPoliceStation from "../Pages/AdminPage/AddPoliceStation";
 import RegisterDonor from "../Pages/AdminPage/RegisterDonar";
 import All_Rent_A_Car from "../Pages/AdminPage/All_Rent_A_Car";
 import Add_Rent_A_Car from "../Pages/AdminPage/Add_Rent_A_Car";
+import All_Fire_Service_Station from "../Pages/AdminPage/All_Fire_Service_Station";
+import Add_Fire_Service from "../Pages/AdminPage/Add_Fire_Service";
+import All_Bank_Lists from "../Pages/AdminPage/All_Bank_Lists";
+import AddBank from "../Pages/AdminPage/AddBank";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -157,10 +161,42 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "/dashboard/all-fire-station",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <All_Fire_Service_Station />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/add-fire-station",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <Add_Fire_Service />
+          </PrivateRoute>
+        ),
+      },
+      {
         path: "/dashboard/cars/add",
         element: (
           <PrivateRoute allowedRoles={["admin"]}>
             <Add_Rent_A_Car />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-banks",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <All_Bank_Lists />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/add-bank",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <AddBank />
           </PrivateRoute>
         ),
       },

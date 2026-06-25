@@ -23,6 +23,8 @@ import {
   Droplet,
   Moon,
   Stethoscope,
+  Pill,
+  Landmark,
 } from "lucide-react";
 
 // ── Types ──
@@ -82,15 +84,6 @@ const navigation: TNavItem[] = [
     ],
   },
   {
-    to: "/dashboard/notable",
-    icon: <Star className="text-green-400" size={18} />,
-    label: "গুণীজন",
-    children: [
-      { to: "/dashboard/notable", label: "সব গুণীজন" },
-      { to: "/dashboard/notable/add", label: "নতুন যোগ করুন" },
-    ],
-  },
-  {
     to: "/dashboard/police",
     icon: <ShieldCheck size={18} className="text-blue-600" />,
     label: "পুলিশ প্রশাসন",
@@ -104,8 +97,8 @@ const navigation: TNavItem[] = [
     icon: <Flame size={18} className="text-orange-500" />,
     label: "অগ্নি পরিষেবা",
     children: [
-      { to: "/dashboard/fire-service", label: "সব স্টেশন তালিকা" },
-      { to: "/dashboard/fire-service/add", label: "নতুন স্টেশন যোগ করুন" },
+      { to: "/dashboard/all-fire-station", label: "সব স্টেশন তালিকা" },
+      { to: "/dashboard/add-fire-station", label: "নতুন স্টেশন যোগ করুন" },
     ],
   },
   {
@@ -136,15 +129,6 @@ const navigation: TNavItem[] = [
     ],
   },
   {
-    to: "/dashboard/news",
-    icon: <Newspaper size={18} />,
-    label: "সংবাদ",
-    children: [
-      { to: "/dashboard/news", label: "সব সংবাদ" },
-      { to: "/dashboard/news/add", label: "নতুন যোগ করুন" },
-    ],
-  },
-  {
     to: "/dashboard/education",
     icon: <School size={18} />,
     label: "শিক্ষা প্রতিষ্ঠান",
@@ -154,9 +138,22 @@ const navigation: TNavItem[] = [
     ],
   },
   {
-    to: "/dashboard/helpline",
-    icon: <Phone size={18} />,
-    label: "হেল্পলাইন",
+    to: "/dashboard/banks",
+    icon: <Landmark size={18} className="text-amber-600" />,
+    label: "ব্যাংক",
+    children: [
+      { to: "/dashboard/all-banks", label: "সব ব্যাংক" },
+      { to: "/dashboard/add-bank", label: "নতুন ব্যাংক যোগ করুন" },
+    ],
+  },
+  {
+    to: "/dashboard/pharmacies",
+    icon: <Pill size={18} className="text-red-500" />,
+    label: "ফার্মেসী",
+    children: [
+      { to: "/dashboard/all-pharmacies", label: "সব ফার্মেসী" },
+      { to: "/dashboard/add-pharmacy", label: "নতুন ফার্মেসী যোগ করুন" },
+    ],
   },
   {
     to: "/dashboard/users",
@@ -317,9 +314,9 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           <NavItem key={item.to} item={item} onClose={onClose} />
         ))}
 
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
+        {/* <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest px-3 mt-4 mb-2">
           সিস্টেম
-        </p>
+        </p> */}
 
         {navigation.slice(13).map((item) => (
           <NavItem key={item.to} item={item} onClose={onClose} />

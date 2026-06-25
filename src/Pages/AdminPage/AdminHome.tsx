@@ -227,7 +227,7 @@ const AdminHome = () => {
         animate="show"
       >
         {/* Welcome Banner */}
-        
+
         <motion.div
           variants={item}
           className="relative overflow-hidden rounded-3xl bg-slate-900 p-6 sm:p-8 border border-white/10 shadow-2xl shadow-blue-950/20"
@@ -249,13 +249,13 @@ const AdminHome = () => {
               </div>
 
               <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight mt-1">
-              Welcome to{" "}
-              <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent drop-shadow-sm">
-                My Barisal Apps
-              </span>{" "}
-              Admin Panel💀
-            </h1>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight mt-1">
+                  Welcome to{" "}
+                  <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent drop-shadow-sm">
+                    My Barisal Apps
+                  </span>{" "}
+                  Admin Panel💀
+                </h1>
                 <p className="text-slate-300 text-sm sm:text-base font-medium max-w-xl mt-1">
                   <span className="text-white font-bold">My Barisal</span>{" "}
                   অ্যাপ্লিকেশনের সকল জরুরি সেবা ও ডাটাবেজ মডিউলসমূহ রিয়েল-টাইমে
@@ -283,7 +283,6 @@ const AdminHome = () => {
 
               <Link
                 to={""}
-        
                 className="flex items-center justify-center gap-2 bg-white/5 text-white border border-white/10 backdrop-blur-md px-5 py-3 rounded-2xl text-sm font-bold hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 no-underline w-full sm:w-auto"
               >
                 <FiEye size={18} className="text-cyan-400" />

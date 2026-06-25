@@ -81,7 +81,11 @@ const adminApi = baseApi.injectEndpoints({
          query: () => '/donars', // আপনার ব্যাকএন্ডের সঠিক রাউট
          providesTags: ['donars']
       }),
-      registerDonar: builder.mutation<any, any>({
+      getAllBanks: builder.query<any, void>({
+         query: () => '/bank', // আপনার ব্যাকএন্ডের সঠিক রাউট
+         providesTags: ['banks']
+      }),
+        registerDonar: builder.mutation<any, any>({
          query: (data) => ({
             url: '/donars/register', // আপনার ব্যাকএন্ডের সঠিক রাউট দিন
             method: 'POST',
@@ -89,9 +93,30 @@ const adminApi = baseApi.injectEndpoints({
          }),
          invalidatesTags: ['donars']
       }),
+      addBank: builder.mutation<any, any>({
+         query: (data) => ({
+            url: '/bank/register', // আপনার ব্যাকএন্ডের সঠিক রাউট দিন
+            method: 'POST',
+            body: data,
+         }),
+         invalidatesTags: ['bank']
+      }),
       getAllPolice: builder.query<any, void>({
          query: () => '/police', // আপনার ব্যাকএন্ডের সঠিক রাউট
          providesTags: ['police']
+      }),
+      getAllFireStation: builder.query<any, void>({
+         query: () => '/fire-service', // আপনার ব্যাকএন্ডের সঠিক রাউট
+         providesTags: ['fire-service']
+      }),
+      // ২. নতুন ফায়ার সার্ভিস স্টেশন যুক্ত করার জন্য মিউটেশন (ভবিষ্যতের কাজের সুবিধার্থে)
+      addFireStation: builder.mutation<any, any>({
+         query: (data) => ({
+            url: "/fire-service/create", // আপনার ব্যাকএন্ডের ক্রিয়েট রাউট
+            method: "POST",
+            body: data,
+         }),
+         invalidatesTags: ["fire-service"], // নতুন স্টেশন অ্যাড হলেই যেন অল-স্টেশন পেজ অটো রিফ্রেশ হয়
       }),
       addPoliceStation: builder.mutation<any, any>({
          query: (data) => ({
@@ -114,9 +139,9 @@ const adminApi = baseApi.injectEndpoints({
          query: (carData) => ({
             url: '/rent-cars/add-car',
             method: 'POST',
-            body: carData, 
+            body: carData,
          }),
-         
+
          invalidatesTags: ['cars'],
       }),
       getAllCars: builder.query<any, void>({
@@ -200,5 +225,9 @@ export const {
    useRegisterDonarMutation,
    useGetAllCarsQuery,
    useDeleteCarMutation,
-   useAddCarMutation
+   useAddCarMutation,
+   useGetAllFireStationQuery,
+   useAddFireStationMutation,
+   useGetAllBanksQuery,
+   useAddBankMutation
 } = adminApi;
