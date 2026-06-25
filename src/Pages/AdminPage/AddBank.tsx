@@ -5,9 +5,7 @@ import {
   FiBriefcase,
   FiTrash2,
   FiArrowLeft,
-  FiMapPin,
-  FiPhone,
-  FiHash,
+ 
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { useAddBankMutation } from "../../Redux/features/admin/adminApi";
@@ -188,7 +186,7 @@ const AddBank = () => {
             </div>
           </div>
           <Link
-            to="/dashboard/banks"
+            to="/dashboard/all-banks"
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-100 transition-all no-underline"
           >
             <FiArrowLeft size={14} /> ফিরে যান
@@ -364,7 +362,7 @@ const AddBank = () => {
           {/* বাটনসমূহ */}
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
             <Link
-              to="/dashboard/banks"
+              to="/dashboard/all-banks"
               className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all no-underline"
             >
               Cancel
