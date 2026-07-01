@@ -81,11 +81,15 @@ const adminApi = baseApi.injectEndpoints({
          query: () => '/donars', // আপনার ব্যাকএন্ডের সঠিক রাউট
          providesTags: ['donars']
       }),
+      getAllPharmacies: builder.query<any, void>({
+         query: () => '/pharmacies', // আপনার ব্যাকএন্ডের সঠিক রাউট
+         providesTags: ['pharmacies']
+      }),
       getAllBanks: builder.query<any, void>({
          query: () => '/bank', // আপনার ব্যাকএন্ডের সঠিক রাউট
          providesTags: ['banks']
       }),
-        registerDonar: builder.mutation<any, any>({
+      registerDonar: builder.mutation<any, any>({
          query: (data) => ({
             url: '/donars/register', // আপনার ব্যাকএন্ডের সঠিক রাউট দিন
             method: 'POST',
@@ -101,6 +105,14 @@ const adminApi = baseApi.injectEndpoints({
          }),
          invalidatesTags: ['bank']
       }),
+      addPharmacy: builder.mutation<any, any>({
+         query: (data) => ({
+            url: '/pharmacies/create-pharmacy', // আপনার ব্যাকএন্ডের সঠিক রাউট দিন
+            method: 'POST',
+            body: data,
+         }),
+         invalidatesTags: ['pharmacies']
+      }),
       getAllPolice: builder.query<any, void>({
          query: () => '/police', // আপনার ব্যাকএন্ডের সঠিক রাউট
          providesTags: ['police']
@@ -108,6 +120,14 @@ const adminApi = baseApi.injectEndpoints({
       getAllFireStation: builder.query<any, void>({
          query: () => '/fire-service', // আপনার ব্যাকএন্ডের সঠিক রাউট
          providesTags: ['fire-service']
+      }),
+      getAllInstitutions: builder.query<any, void>({
+         query: () => '/institutions', // আপনার ব্যাকএন্ডের সঠিক রাউট
+         providesTags: ['institute']
+      }),
+      getAllImamMuzzain: builder.query<any, void>({
+         query: () => '/imam-muazzin', // আপনার ব্যাকএন্ডের সঠিক রাউট
+         providesTags: ['imam-muazzin']
       }),
       // ২. নতুন ফায়ার সার্ভিস স্টেশন যুক্ত করার জন্য মিউটেশন (ভবিষ্যতের কাজের সুবিধার্থে)
       addFireStation: builder.mutation<any, any>({
@@ -117,6 +137,14 @@ const adminApi = baseApi.injectEndpoints({
             body: data,
          }),
          invalidatesTags: ["fire-service"], // নতুন স্টেশন অ্যাড হলেই যেন অল-স্টেশন পেজ অটো রিফ্রেশ হয়
+      }),
+      addImamMuzzain: builder.mutation<any, any>({
+         query: (data) => ({
+            url: "/imam-muazzin/create", // আপনার ব্যাকএন্ডের ক্রিয়েট রাউট
+            method: "POST",
+            body: data,
+         }),
+         invalidatesTags: ["imam-muazzin"], // নতুন স্টেশন অ্যাড হলেই যেন অল-স্টেশন পেজ অটো রিফ্রেশ হয়
       }),
       addPoliceStation: builder.mutation<any, any>({
          query: (data) => ({
@@ -143,6 +171,15 @@ const adminApi = baseApi.injectEndpoints({
          }),
 
          invalidatesTags: ['cars'],
+      }),
+      addInstitute: builder.mutation<any, any>({
+         query: (instituteData) => ({
+            url: '/institutions/create',
+            method: 'POST',
+            body: instituteData,
+         }),
+
+         invalidatesTags: ['institute'],
       }),
       getAllCars: builder.query<any, void>({
          query: () => ({
@@ -229,5 +266,11 @@ export const {
    useGetAllFireStationQuery,
    useAddFireStationMutation,
    useGetAllBanksQuery,
-   useAddBankMutation
+   useAddBankMutation,
+   useGetAllPharmaciesQuery,
+   useAddPharmacyMutation,
+   useGetAllImamMuzzainQuery,
+   useAddImamMuzzainMutation,
+   useGetAllInstitutionsQuery,
+   useAddInstituteMutation
 } = adminApi;

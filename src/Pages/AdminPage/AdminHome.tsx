@@ -138,7 +138,7 @@ const AdminHome = () => {
     useGetAllUsersQuery(undefined);
   const { data: ambulances, isLoading: isAmbulancesLoading } =
     useGetAllAmbulanceQuery(undefined);
-  console.log(user);
+
   // Show the loader if any of the major API requests are still loading
   if (
     isHospitalsLoading ||

@@ -106,8 +106,8 @@ const navigation: TNavItem[] = [
     icon: <Moon size={18} className="text-teal-500" />,
     label: "ইমাম ও খতিব",
     children: [
-      { to: "/dashboard/imams", label: "সব ইমাম তালিকা" },
-      { to: "/dashboard/imams/add", label: "নতুন ইমাম যোগ করুন" },
+      { to: "/dashboard/all-imam-muazzin", label: "সব ইমাম তালিকা" },
+      { to: "/dashboard/imam-muazzin/add", label: "নতুন ইমাম যোগ করুন" },
     ],
   },
   {
@@ -133,8 +133,8 @@ const navigation: TNavItem[] = [
     icon: <School size={18} />,
     label: "শিক্ষা প্রতিষ্ঠান",
     children: [
-      { to: "/dashboard/education", label: "সব প্রতিষ্ঠান" },
-      { to: "/dashboard/education/add", label: "নতুন যোগ করুন" },
+      { to: "/dashboard/all-institute", label: "সব প্রতিষ্ঠান" },
+      { to: "/dashboard/add-institute", label: "নতুন যোগ করুন" },
     ],
   },
   {

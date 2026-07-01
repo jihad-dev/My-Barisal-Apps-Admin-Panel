@@ -32,6 +32,12 @@ import All_Fire_Service_Station from "../Pages/AdminPage/All_Fire_Service_Statio
 import Add_Fire_Service from "../Pages/AdminPage/Add_Fire_Service";
 import All_Bank_Lists from "../Pages/AdminPage/All_Bank_Lists";
 import AddBank from "../Pages/AdminPage/AddBank";
+import All_Pharmacies from "../Pages/AdminPage/All_Pharmacies";
+import Add_Pharmacy from "../Pages/AdminPage/Add_Pharmacy";
+import All_Imam from "../Pages/AdminPage/All_Imam";
+import Add_Imam_muzzain from "../Pages/AdminPage/Add_Imam_muzzain";
+import All_Institute from "../Pages/AdminPage/All_Institute";
+import Add_Institute from "../Pages/AdminPage/Add_Institute";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -189,6 +195,54 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute allowedRoles={["admin"]}>
             <All_Bank_Lists />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-pharmacies",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <All_Pharmacies />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-institute",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <All_Institute />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/add-institute",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <Add_Institute />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/all-imam-muazzin",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <All_Imam />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/imam-muazzin/add",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <Add_Imam_muzzain />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard/add-pharmacy",
+        element: (
+          <PrivateRoute allowedRoles={["admin"]}>
+            <Add_Pharmacy />
           </PrivateRoute>
         ),
       },

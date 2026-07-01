@@ -12,7 +12,6 @@ import {
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { useGetAllDonorsQuery } from "../../Redux/features/admin/adminApi";
-import { toast } from "sonner";
 
 const AllDonors = () => {
   const {
