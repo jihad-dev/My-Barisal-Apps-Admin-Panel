@@ -8,9 +8,10 @@ interface Hospital {
   _id: string;
   name: string;
   address: string;
+  thana?: string; // নতুন ব্যাকএন্ড ফিল্ডের সাথে মিল রেখে যুক্ত করা হলো
   area: string;
   phone: string[];
-  type: "government" | "private" | "clinic";
+  type: "government" | "private" | "clinic" | "diagnostic"; // diagnostic যুক্ত করা হলো
   isDeleted: boolean;
   createdAt?: string;
 }
@@ -46,6 +47,16 @@ const typeMap = {
     icon: "bg-violet-50 text-violet-600",
     dot: "bg-violet-400",
   },
+  diagnostic: {
+    label: "ডায়াগনস্টিক",
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    bar: "from-emerald-400 to-teal-500",
+    icon: "bg-emerald-50 text-emerald-600",
+    dot: "bg-emerald-400",
+  },
 } as const;
 
 const FILTERS = [
@@ -53,6 +64,21 @@ const FILTERS = [
   { key: "government", label: "সরকারি" },
   { key: "private", label: "বেসরকারি" },
   { key: "clinic", label: "ক্লিনিক" },
+  { key: "diagnostic", label: "ডায়াগনস্টিক" },
+];
+
+const THANAS = [
+  { key: "all", label: "সকল থানা" },
+  { key: "barisal sadar", label: "বরিশাল সদর" },
+  { key: "bakerganj", label: "বাকেরগঞ্জ" },
+  { key: "wazirpur", label: "উজিরপুর" },
+  { key: "babuganj", label: "বাবুগঞ্জ" },
+  { key: "banaripara", label: "বানারীপাড়া" },
+  { key: "gournadi", label: "গৌরনদী" },
+  { key: "agailjhara", label: "আগৈলঝারা" },
+  { key: "mehendiganj", label: "মেহেন্দিগঞ্জ" },
+  { key: "muladi", label: "মুলাদী" },
+  { key: "hizla", label: "হিজলা" },
 ];
 
 /* ── icons ── */
@@ -144,21 +170,33 @@ const headV = {
 
 /* ── component ── */
 const AllHospitals = () => {
-  const { data, error, isLoading, isFetching } = useGetAllHospitalsQuery({});
+  const { data, error, isLoading, isFetching } =
+    useGetAllHospitalsQuery(undefined);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [selectedThana, setSelectedThana] = useState("all"); // থানার নতুন স্টেট
+
   if (isLoading) return <Loader />;
-  const all: Hospital[] = (data?.data ?? []).filter(
-    (h: Hospital) => !h.isDeleted,
-  );
+
+  // API রেসপন্স স্ট্রাকচার সেফটি চেক
+  const rawData = data?.data?.data ? data.data.data : (data?.data ?? []);
+
+  const all: Hospital[] = rawData.filter((h: Hospital) => !h.isDeleted);
 
   const filtered = all.filter((h) => {
     const okType = filter === "all" || h.type === filter;
+
+    // সেফ কেস-ইনসেনসিটিভ থানা ফিল্টারিং লজিক
+    const okThana =
+      selectedThana === "all" ||
+      h.thana?.trim().toLowerCase() === selectedThana.toLowerCase();
+
     const okSearch = [h.name, h.area, h.address].some((s) =>
-      s.includes(search),
+      s?.toLowerCase().includes(search.toLowerCase()),
     );
-    return okType && okSearch;
+
+    return okType && okThana && okSearch;
   });
 
   return (
@@ -205,6 +243,21 @@ const AllHospitals = () => {
             )}
           </AnimatePresence>
 
+          {/* Thana Filter Dropdown (নতুন যুক্ত করা হয়েছে) */}
+          <div className="relative">
+            <select
+              value={selectedThana}
+              onChange={(e) => setSelectedThana(e.target.value)}
+              className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all shadow-sm cursor-pointer"
+            >
+              {THANAS.map((t) => (
+                <option key={t.key} value={t.key}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Search */}
           <div className="relative flex items-center">
             <span className="absolute left-3 text-gray-400 pointer-events-none">
@@ -214,12 +267,12 @@ const AllHospitals = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="খুঁজুন..."
-              className="bg-white border border-gray-200 rounded-full py-2 pl-9 pr-4 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all duration-200 w-40 focus:w-52 shadow-sm"
+              className="bg-white border border-gray-200 rounded-full py-2 pl-9 pr-4 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all duration-200 w-36 focus:w-48 shadow-sm"
             />
           </div>
 
           {/* Filter tabs */}
-          <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
+          <div className="flex flex-wrap gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
             {FILTERS.map((f) => (
               <motion.button
                 key={f.key}
@@ -261,18 +314,8 @@ const AllHospitals = () => {
         </div>
       </motion.div>
 
-      {/* ── Loading ── */}
-      {isLoading ? (
-        <div className="flex items-center justify-center gap-3 py-24 bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400 text-sm">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 0.75, ease: "linear" }}
-            className="w-5 h-5 rounded-full border-2 border-gray-200 border-t-cyan-500"
-          />
-          লোড হচ্ছে...
-        </div>
-      ) : /* ── Error ── */
-      error ? (
+      {/* ── Main View (Error / Grid) ── */}
+      {error ? (
         <div className="py-24 text-center text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm">
           ⚠️ ডেটা লোড করতে সমস্যা হয়েছে।
         </div>
@@ -337,6 +380,8 @@ const AllHospitals = () => {
                             <IcoPin />
                           </span>
                           <span>
+                            {h.thana &&
+                              `${THANAS.find((th) => th.key === h.thana?.toLowerCase())?.label || h.thana} — `}
                             {h.area} — {h.address}
                           </span>
                         </div>
@@ -359,9 +404,9 @@ const AllHospitals = () => {
                       {/* footer */}
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-gray-400 font-mono">
-                          {new Date(h.createdAt ?? "").toLocaleDateString(
-                            "bn-BD",
-                          )}
+                          {h.createdAt
+                            ? new Date(h.createdAt).toLocaleDateString("bn-BD")
+                            : "N/A"}
                         </span>
                         <div className="flex gap-1.5">
                           <motion.button
