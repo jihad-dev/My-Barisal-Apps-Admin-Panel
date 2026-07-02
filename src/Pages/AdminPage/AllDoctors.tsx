@@ -1,5 +1,3 @@
-
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -20,13 +18,14 @@ import { Link } from "react-router-dom";
 import { useGetAllDoctorsQuery } from "../../Redux/features/admin/adminApi";
 import Loader from "../../utils/Loader";
 
-// টাইপ ডেফিনিশন (TypeScript Error দূর করার জন্য)
+// টাইপ ডেফিনিশন (TypeScript Error দূর করার জন্য area যুক্ত করা হয়েছে)
 interface TDoctor {
   _id: string;
   name: string;
   speciality: string;
   degree: string;
   experience: string;
+  area: string; // 💡 নতুন ফিল্ড যুক্ত করা হলো
   chamberAddress: string;
   visitingHours: string;
   phone: string[];
@@ -50,12 +49,28 @@ const AllDoctors = () => {
   // স্টেট ম্যানেজমেন্ট (সার্চ, ফিল্টার এবং পেজিনেশন)
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
+  const [selectedThana, setSelectedThana] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-
-  // RTK Query দিয়ে ডাটা ফেচিং
+  console.log(selectedThana);
+  // RTK Query দিয়ে ডাটা ফেচিং
   const { data: doctorsData, isLoading } = useGetAllDoctorsQuery(undefined);
+  console.log(doctorsData?.data)
   // const [deleteDoctor] = useDeleteDoctorMutation();
+
+  // বরিশালের সবগুলো থানা (যা ড্রপডাউনে থাকবে)
+  const thanas = [
+    { name: "বরিশাল সদর (Barisal Sadar)", value: "Barisal Sadar" },
+    { name: "বাকেরগঞ্জ (Bakerganj)", value: "Bakerganj" },
+    { name: "উজিরপুর (Wazirpur)", value: "Wazirpur" },
+    { name: "বাবুগঞ্জ (Babuganj)", value: "Babuganj" },
+    { name: "বানারীপাড়া (Banaripara)", value: "Banaripara" },
+    { name: "গৌরনদী (Gournadi)", value: "Gournadi" },
+    { name: "আগৈলঝারা (Agailjhara)", value: "Agailjhara" },
+    { name: "মেহেন্দিগঞ্জ (Mehendiganj)", value: "Mehendiganj" },
+    { name: "মুলাদী (Muladi)", value: "Muladi" },
+    { name: "হিজলা (Hizla)", value: "Hizla" },
+  ];
 
   const handleLinkClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -78,18 +93,25 @@ const AllDoctors = () => {
   // API থেকে ডাটা অ্যারে ডিফাইন করা
   const doctors: TDoctor[] = doctorsData?.data || [];
 
-  // ১. সার্চ এবং ফিল্টারিং লজিক (আপনার JSON স্কিমা অনুযায়ী সম্পূর্ণ ফিক্সড)
+  // ১. সার্চ, বিশেষজ্ঞ এবং থানা ভিত্তিক ফিল্টারিং লজিক
   const filteredDoctors = doctors.filter((doctor) => {
     const matchesSearch =
       doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.degree.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.speciality.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.phone.some((p) => p.includes(searchTerm)); // ফোন অ্যারে সার্চ ফিক্স
+      doctor.phone.some((p) => p.includes(searchTerm));
 
     const matchesSpecialty =
       selectedSpecialty === "" || doctor.speciality === selectedSpecialty;
 
-    return matchesSearch && matchesSpecialty && !doctor.isDeleted;
+    // 💡 থানা ম্যাচিং লজিক (ডাটাবেজের area এর সাথে ড্রপডাউন ভ্যালু চেক)
+    const matchesThana =
+      selectedThana === "" ||
+      doctor.area?.toLowerCase() === selectedThana.toLowerCase();
+
+    return (
+      matchesSearch && matchesSpecialty && matchesThana && !doctor.isDeleted
+    );
   });
 
   // ২. পেজিনেশন লজিক
@@ -120,7 +142,7 @@ const AllDoctors = () => {
         >
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              ডাক্তার তালিকা
+              ডাক্তার তালিকা ({filteredDoctors.length})
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               প্যানেলের সকল নিবন্ধিত ডাক্তারদের তথ্য পরিচালনা করুন
@@ -135,13 +157,13 @@ const AllDoctors = () => {
           </Link>
         </motion.div>
 
-        {/* সার্চ এবং ফিল্টার বার */}
+        {/* 🛠️ সার্চ এবং ফিল্টার বার (থানা ড্রপডাউনসহ ৩টি কলামে বিন্যস্ত) */}
         <motion.div
           variants={itemVariants}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm"
+          className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm"
         >
           {/* সার্চ ইনপুট */}
-          <div className="relative col-span-1 sm:col-span-2">
+          <div className="relative col-span-1 md:col-span-2">
             <FiSearch
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
               size={18}
@@ -156,6 +178,29 @@ const AllDoctors = () => {
               }}
               className="w-full bg-gray-50 text-gray-900 text-sm pl-11 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-all"
             />
+          </div>
+
+          {/* 💡 থানা ফিল্টার ড্রপডাউন */}
+          <div className="relative">
+            <FiMapPin
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <select
+              value={selectedThana}
+              onChange={(e) => {
+                setSelectedThana(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-gray-50 text-gray-900 text-sm pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer"
+            >
+              <option value="">সব থানা (All Thanas)</option>
+              {thanas.map((thana) => (
+                <option key={thana.value} value={thana.value}>
+                  {thana.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* স্পেশালিটি ফিল্টার */}
@@ -198,7 +243,7 @@ const AllDoctors = () => {
                     ডাক্তারের বিবরণ
                   </th>
                   <th className="p-4 text-xs font-bold text-gray-600 uppercase tracking-wider">
-                    চেম্বার ও সময়
+                    চেম্বার ও সময়
                   </th>
                   <th className="p-4 text-xs font-bold text-gray-600 uppercase tracking-wider">
                     যোগাযোগ
@@ -236,13 +281,19 @@ const AllDoctors = () => {
                         </div>
                       </td>
 
-                      {/* চেম্বার এড্রেস ও ভিজিটিং আওয়ার */}
+                      {/* চেম্বার এড্রেস, থানা ও ভিজিটিং আওয়ার */}
                       <td className="p-4 max-w-sm">
                         <div className="flex flex-col space-y-1.5 text-xs text-gray-600">
                           {/* স্পেশালিটি ট্যাগ */}
-                          <div className="inline-flex items-center gap-1.5 font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-lg w-max mb-1">
-                            <FiSliders size={12} />
-                            {doctor.speciality}
+                          <div className="flex items-center gap-2">
+                            <div className="inline-flex items-center gap-1.5 font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-lg w-max">
+                              <FiSliders size={12} />
+                              {doctor.speciality}
+                            </div>
+                            {/* 💡 এলাকা/থানা ব্যাজ */}
+                            <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-2 py-0.5 rounded-lg font-medium text-[11px]">
+                              <FiMapPin size={11} /> {doctor.area || "N/A"}
+                            </span>
                           </div>
                           <div className="flex items-start gap-1">
                             <FiMapPin
@@ -310,7 +361,8 @@ const AllDoctors = () => {
                       colSpan={5}
                       className="p-8 text-center text-sm text-gray-400"
                     >
-                      কোনো ডাক্তারের তথ্য পাওয়া যায়নি।
+                      নির্বাচিত থানা বা ক্যাটাগরিতে কোনো ডাক্তারের তথ্য পাওয়া
+                      যায়নি।
                     </td>
                   </tr>
                 )}

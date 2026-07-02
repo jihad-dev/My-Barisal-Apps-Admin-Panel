@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -34,9 +35,23 @@ const SPECIALITIES = [
   "Dentist",
 ];
 
+// 💡 বরিশালের থানা সমূহের লিস্ট (ড্রপডাউনের জন্য)
+const THANAS = [
+  { name: "বরিশাল সদর (Barisal Sadar)", value: "Barisal Sadar" },
+  { name: "বাকেরগঞ্জ (Bakerganj)", value: "Bakerganj" },
+  { name: "উজিরপুর (Wazirpur)", value: "Wazirpur" },
+  { name: "বাবুগঞ্জ (Babuganj)", value: "Babuganj" },
+  { name: "বানারীপাড়া (Banaripara)", value: "Banaripara" },
+  { name: "গৌরনদী (Gournadi)", value: "Gournadi" },
+  { name: "আগৈলঝারা (Agailjhara)", value: "Agailjhara" },
+  { name: "মেহেন্দিগঞ্জ (Mehendiganj)", value: "Mehendiganj" },
+  { name: "মুলাদী (Muladi)", value: "Muladi" },
+  { name: "হিজলা (Hizla)", value: "Hizla" },
+];
+
 // অভিজ্ঞতা ড্রপডাউনের জন্য ১ থেকে ৫০ বছরের অ্যারে জেনারেটর
 const EXPERIENCE_YEARS = Array.from(
-  { length: 50 },
+  { length: 20 },
   (_, i) => `${i + 1} Year${i > 0 ? "s" : ""} Experience`,
 );
 
@@ -44,12 +59,13 @@ const AddDoctor = () => {
   const navigate = useNavigate();
   const [addDoctor, { isLoading }] = useAddDoctorMutation();
 
-  // ফর্ম মেইন স্টেট
+  // ফর্ম মেইন স্টেট (area যুক্ত করা হয়েছে)
   const [formData, setFormData] = useState({
     name: "",
     speciality: "",
     degree: "",
     experience: "",
+    area: "", // 💡 নতুন এরিয়া/থানা স্টেট
     chamberAddress: "",
     visitingHours: "",
   });
@@ -101,6 +117,12 @@ const AddDoctor = () => {
       return;
     }
 
+    // এরিয়া/থানা ভ্যালিডেশন
+    if (!formData.area) {
+      toast.error("অনুগ্রহ করে ডাক্তারের এলাকা বা উপজেলা নির্বাচন করুন");
+      return;
+    }
+
     // অভিজ্ঞতা ড্রপডাউন ভ্যালিডেশন
     if (!formData.experience) {
       toast.error("অনুগ্রহ করে ডাক্তারের অভিজ্ঞতা (Experience) সিলেক্ট করুন");
@@ -122,15 +144,17 @@ const AddDoctor = () => {
       return;
     }
 
-    // ব্যাকএন্ডে পাঠানোর চূড়ান্ত অবজেক্ট
+    // ব্যাকএন্ডে পাঠানোর চূড়ান্ত অবজেক্ট (Zod schema বডি স্ট্রাকচার অনুয়ায়ী)
     const submitData = {
-      ...formData,
-      phone: validPhones,
-      isDeleted: false,
+      body: {
+        ...formData,
+        phone: validPhones,
+        isDeleted: false,
+      },
     };
 
     try {
-      const res = await addDoctor(submitData).unwrap();
+      const res = await addDoctor(submitData.body).unwrap();
       if (res?.success || res) {
         toast.success("নতুন ডাক্তার সফলভাবে যোগ করা হয়েছে!");
         navigate("/dashboard/all-doctors");
@@ -159,7 +183,7 @@ const AddDoctor = () => {
             className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors no-underline"
           >
             <FiArrowLeft size={16} />
-            তালিকায় ফিরে যান
+            তালিকায় ফিরে যান
           </Link>
         </div>
 
@@ -240,31 +264,41 @@ const AddDoctor = () => {
                   </div>
                 </div>
 
-                {/* ডিগ্রি ফিল্ড */}
-                <div className="space-y-1.5 sm:col-span-2">
+                {/* 💡 নতুন এরিয়া / থানা ড্রপডাউন ফিল্ড */}
+                <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-gray-700">
-                    ডিগ্রি / শিক্ষাগত যোগ্যতা{" "}
+                    এলাকা / উপজেলা (Thana){" "}
                     <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <FiAward
-                      className="absolute left-3.5 top-3 text-gray-400"
+                    <FiMapPin
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
                       size={16}
                     />
-                    <textarea
-                      name="degree"
+                    <select
+                      name="area"
                       required
-                      rows={2}
-                      placeholder="উদাঃ MBBS, BCS, FCPS (Medicine)"
-                      value={formData.degree}
+                      value={formData.area}
                       onChange={handleInputChange}
-                      className="w-full bg-gray-50 text-gray-900 text-sm pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-all resize-none"
-                    />
+                      className="w-full bg-gray-50 text-gray-900 text-sm pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer"
+                    >
+                      <option value="" disabled>
+                        -- এলাকা বা থানা সিলেক্ট করুন --
+                      </option>
+                      {THANAS.map((thana, idx) => (
+                        <option key={idx} value={thana.value}>
+                          {thana.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                      ▼
+                    </div>
                   </div>
                 </div>
 
                 {/* নতুন অভিজ্ঞতা (Experience) ড্রপডাউন ফিল্ড */}
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-gray-700">
                     অভিজ্ঞতা (Experience){" "}
                     <span className="text-red-500">*</span>
@@ -293,6 +327,29 @@ const AddDoctor = () => {
                     <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
                       ▼
                     </div>
+                  </div>
+                </div>
+
+                {/* ডিগ্রি ফিল্ড */}
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-xs font-semibold text-gray-700">
+                    ডিগ্রি / শিক্ষাগত যোগ্যতা{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <FiAward
+                      className="absolute left-3.5 top-3 text-gray-400"
+                      size={16}
+                    />
+                    <textarea
+                      name="degree"
+                      required
+                      rows={2}
+                      placeholder="উদাঃ MBBS, BCS, FCPS (Medicine)"
+                      value={formData.degree}
+                      onChange={handleInputChange}
+                      className="w-full bg-gray-50 text-gray-900 text-sm pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-all resize-none"
+                    />
                   </div>
                 </div>
               </div>
