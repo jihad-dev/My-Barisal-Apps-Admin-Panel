@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -18,12 +19,26 @@ interface FireStationFormData {
   type: "government" | "volunteer";
   status: "active" | "inactive";
   area: string;
+  thana: string;
 }
 
 const STATION_TYPES = [
   { label: "Government (সরকারি)", value: "government" },
   { label: "Volunteer (স্বেচ্ছাসেবী)", value: "volunteer" },
-];
+] as const;
+
+const THANAS = [
+  { key: "barisal sadar", label: "বরিশাল সদর" },
+  { key: "bakerganj", label: "বাকেরগঞ্জ" },
+  { key: "wazirpur", label: "উজিরপুর" },
+  { key: "babuganj", label: "বাবুগঞ্জ" },
+  { key: "banaripara", label: "বানারীপাড়া" },
+  { key: "gournadi", label: "গৌরনদী" },
+  { key: "agailjhara", label: "আগৈলঝারা" },
+  { key: "mehendiganj", label: "মেহেন্দিগঞ্জ" },
+  { key: "muladi", label: "মুলাদী" },
+  { key: "hizla", label: "হিজলা" },
+] as const;
 
 const Add_Fire_Service = () => {
   const [addFireStation, { isLoading }] = useAddFireStationMutation();
@@ -33,6 +48,7 @@ const Add_Fire_Service = () => {
     name: "",
     type: "government",
     area: "",
+    thana: "",
     status: "active",
   });
 
@@ -45,7 +61,7 @@ const Add_Fire_Service = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name as keyof FireStationFormData]: value,
+      [name]: value,
     }));
 
     if (errors[name]) {
@@ -57,9 +73,7 @@ const Add_Fire_Service = () => {
     }
   };
 
-  // 📞 ১. রিয়েল-টাইম টাইপিং ভেরিফিকেশন (১১ ডিজিট লক)
   const handlePhoneChange = (index: number, value: string) => {
-    // শুধু সংখ্যা ইনপুট নেওয়ার লক (স্পেস বা টেক্সট রিমুভ করবে)
     const cleanValue = value.replace(/[^0-9]/g, "");
 
     const updatedPhones = [...phones];
@@ -68,7 +82,6 @@ const Add_Fire_Service = () => {
 
     const errorKey = `phone_${index}`;
 
-    // রিয়েল-টাইম এরর চেক
     if (cleanValue.length > 5 && cleanValue.length < 11) {
       setErrors((prev) => ({
         ...prev,
@@ -77,10 +90,9 @@ const Add_Fire_Service = () => {
     } else if (cleanValue.length > 11) {
       setErrors((prev) => ({
         ...prev,
-        [errorKey]: "১১ ডিজিটের বেশি নম্বর নেওয়া যাবে না!",
+        [errorKey]: "১১ ডিজিটের বেশি নম্বর নেওয়া যাবে না!",
       }));
     } else {
-      // যদি শর্টকোড (<=5) হয় অথবা একদম ১১ ডিজিট হয়, তবে এরর মুছে যাবে
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[errorKey];
@@ -94,6 +106,7 @@ const Add_Fire_Service = () => {
   const removePhoneField = (index: number) => {
     const updatedPhones = phones.filter((_, i) => i !== index);
     setPhones(updatedPhones);
+
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors[`phone_${index}`];
@@ -101,19 +114,18 @@ const Add_Fire_Service = () => {
     });
   };
 
-  // 🛠️ ২. সাবমিট করার সময় ১১ ডিজিট ফাইনাল ভেরিফিকেশন
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) newErrors.name = "নাম দিন";
-    if (!formData.area.trim()) newErrors.area = "এلاকা দিন";
+    if (!formData.thana) newErrors.thana = "থানা সিলেক্ট করুন";
+    if (!formData.area.trim()) newErrors.area = "এলাকা দিন";
 
     phones.forEach((phone, index) => {
       const cleanPhone = phone.trim();
       if (!cleanPhone) {
         newErrors[`phone_${index}`] = "কমপক্ষে একটি নম্বর দিন";
       } else if (cleanPhone.length > 5 && cleanPhone.length !== 11) {
-        // ৫ ডিজিটের বেশি হলে সেটা অবশ্যই ১১ ডিজিট হতে হবে
         newErrors[`phone_${index}`] =
           "মোবাইল নম্বরটি অবশ্যই ১১ ডিজিটের হতে হবে!";
       }
@@ -133,22 +145,25 @@ const Add_Fire_Service = () => {
       name: formData.name,
       type: formData.type,
       status: formData.status,
+      thana: formData.thana,
       area: formData.area,
       phone: phones.filter((p) => p.trim() !== ""),
     };
 
-    let toastId = "";
+    let toastId: string | number | undefined;
     try {
-      toastId = toast.loading("নতুন ফায়ার স্টেশন যুক্ত করা হচ্ছে...");
+      toastId = toast.loading("নতুন ফায়ার释放 স্টেশন যুক্ত করা হচ্ছে...");
       await addFireStation(finalData).unwrap();
 
-      toast.success("নতুন ফায়ার স্টেশন সফলভাবে যুক্ত হয়েছে!", { id: toastId });
-      navigate("/dashboard/fire-stations");
+      toast.success("নতুন ফায়ার স্টেশন সফলভাবে যুক্ত হয়েছে!", {
+        id: toastId,
+      });
+      navigate("/dashboard/all-fire-station");
     } catch (error: any) {
       const errorMsg =
         error?.data?.issues?.[0]?.message ||
         error?.data?.message ||
-        "স্টেশনটি যোগ করতে ব্যর্থ হয়েছে!";
+        "স্টেশনটি যোগ করতে ব্যর্থ হয়েছে!";
       toast.error(errorMsg, { id: toastId });
     }
   };
@@ -164,7 +179,7 @@ const Add_Fire_Service = () => {
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">
-                নতুন ফায়ার স্টেশন যুক্ত করুন
+                নতুন ফায়ার স্টেশন যুক্ত করুন
               </h1>
               <p className="text-xs text-gray-500 font-medium mt-0.5">
                 My Barisal অ্যাপ ডিরেক্টরিতে ১১ ডিজিট ভেরিফাইড নম্বর সহ নতুন
@@ -173,7 +188,7 @@ const Add_Fire_Service = () => {
             </div>
           </div>
           <Link
-            to="/dashboard/fire-stations"
+            to="/dashboard/all-fire-station"
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-100 transition-all no-underline"
           >
             <FiArrowLeft size={14} /> ফিরে যান
@@ -191,7 +206,7 @@ const Add_Fire_Service = () => {
           <div className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                <FiShield size={13} className="text-gray-400" /> ফায়ার স্টেশনের
+                <FiShield size={13} className="text-gray-400" /> ফায়ার স্টেশনের
                 নাম <span className="text-rose-500">*</span>
               </label>
               <input
@@ -229,31 +244,64 @@ const Add_Fire_Service = () => {
                 </select>
               </div>
 
+              {/* থানা সিলেকশন */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                  <FiMapPin size={13} className="text-gray-400" /> এলাকা/উপজেলা{" "}
-                  <span className="text-rose-500">*</span>
+                  <FiMapPin size={13} className="text-gray-400" /> থানা সিলেক্ট
+                  করুন <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="area"
-                  value={formData.area}
+                <select
+                  name="thana"
+                  value={formData.thana}
                   onChange={handleInputChange}
-                  placeholder="উদাঃ বরিশাল সদর"
-                  className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-rose-500 focus:bg-white focus:ring-2 focus:ring-rose-500/10 outline-none transition-all font-medium"
-                />
-                {errors.area && (
+                  className={`w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-medium cursor-pointer ${
+                    errors.thana
+                      ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10"
+                      : "border-gray-200 focus:border-rose-500 focus:ring-rose-500/10"
+                  }`}
+                >
+                  <option value="" disabled>
+                    থানা নির্বাচন করুন
+                  </option>
+                  {THANAS.map((th) => (
+                    <option key={th.key} value={th.key}>
+                      {th.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.thana && (
                   <span className="text-xs font-bold text-rose-500">
-                    {errors.area}
+                    {errors.thana}
                   </span>
                 )}
               </div>
+            </div>
+
+            {/* এলাকা ইনপুট */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                <FiMapPin size={13} className="text-gray-400" /> সুনির্দিষ্ট
+                এলাকা/রোড/গ্রাম <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="area"
+                value={formData.area}
+                onChange={handleInputChange}
+                placeholder="উদাঃ বান্দ রোড অথবা টরকী বন্দর"
+                className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-rose-500 focus:bg-white focus:ring-2 focus:ring-rose-500/10 outline-none transition-all font-medium"
+              />
+              {errors.area && (
+                <span className="text-xs font-bold text-rose-500">
+                  {errors.area}
+                </span>
+              )}
             </div>
           </div>
 
           <hr className="border-gray-100" />
 
-          {/* 📞 সেকশন ২: ফোন নম্বরসমূহ (১১ ডিজিট ভেরিফিকেশন ব্যাজ সহ) */}
+          {/* কন্টাক্ট নম্বরসমূহ */}
           <div className="space-y-3">
             <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
               <span className="flex items-center gap-1">
@@ -283,7 +331,7 @@ const Add_Fire_Service = () => {
                         <input
                           type="text"
                           value={phone}
-                          maxLength={11} // ১১ ডিজিটের বেশি টাইপ করা লক করে দেওয়া হলো
+                          maxLength={11}
                           placeholder="উদাঃ 199 বা 017XXXXXXXX"
                           onChange={(e) =>
                             handlePhoneChange(index, e.target.value)
@@ -294,7 +342,6 @@ const Add_Fire_Service = () => {
                               : "border-gray-200 focus:border-rose-500 focus:ring-rose-500/10"
                           }`}
                         />
-                        {/* 🟢 ডাইনামিক রিয়েল-টাইম ১১ ডিজিট কাউন্টার */}
                         {phone.length > 0 && (
                           <span
                             className={`absolute right-3 px-1.5 py-0.5 text-[9px] font-black rounded-md font-sans select-none ${
@@ -333,7 +380,7 @@ const Add_Fire_Service = () => {
           {/* সাবমিট প্যানেল */}
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
             <Link
-              to="/dashboard/fire-stations"
+              to="/dashboard/all-fire-station"
               className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all no-underline cursor-pointer"
             >
               Cancel

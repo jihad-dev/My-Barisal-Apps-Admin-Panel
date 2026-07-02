@@ -1,210 +1,343 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import {
-  FiShield,
-  FiPhone,
-  FiMapPin,
-  FiSearch,
-  FiPlus,
-  FiLoader,
-  FiAlertCircle,
-} from "react-icons/fi";
-import { useGetAllFireStationQuery } from "../../Redux/features/admin/adminApi";
 
-// ফায়ার সার্ভিসের ইন্টারফেস
-interface FireStation {
-  _id: string;
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useGetAllFireStationQuery } from "../../Redux/features/admin/adminApi";
+import Loader from "../../utils/Loader";
+
+export type TFireServiceType = "government" | "volunteer";
+export type TFireServiceStatus = "active" | "inactive";
+
+export interface IFireService {
+  _id?: string;
   name: string;
-  type: string;
-  status: string;
+  type: TFireServiceType;
+  status: TFireServiceStatus;
   area: string;
+  thana: string;
   phone: string[];
   isDeleted: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
-const All_Fire_Service_Station = () => {
-  const {
-    data: fireStationsData,
-    isLoading,
-    isError,
-  } = useGetAllFireStationQuery(undefined);
-  const [searchQuery, setSearchQuery] = useState("");
+/* ── Fire Service Type & Status Styles ── */
+const typeMap = {
+  government: {
+    label: "সরকারি",
+    color: "from-red-500 to-rose-600",
+    badge: "bg-red-50 text-red-700 border-red-200",
+  },
+  volunteer: {
+    label: "স্বেচ্ছাসেবী",
+    color: "from-orange-500 to-amber-600",
+    badge: "bg-orange-50 text-orange-700 border-orange-200",
+  },
+} as const;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-gray-500">
-        <FiLoader size={35} className="animate-spin text-indigo-600" />
-        <span className="text-sm font-bold">
-          ফায়ার সার্ভিস স্টেশন ডেটা লোড হচ্ছে...
-        </span>
-      </div>
-    );
-  }
+/* ── Fire Service Filters ── */
+const FILTERS = [
+  { key: "all", label: "সব" },
+  { key: "government", label: "সরকারি" },
+  { key: "volunteer", label: "স্বেচ্ছাসেবী" },
+];
 
-  if (isError || !fireStationsData) {
-    return (
-      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-2 text-rose-500 bg-rose-50/50 rounded-2xl border border-rose-100 p-6 max-w-xl mx-auto mt-10">
-        <FiAlertCircle size={40} />
-        <h3 className="font-black text-base">ডেটা লোড করতে সমস্যা হয়েছে!</h3>
-        <p className="text-xs text-gray-500 text-center">
-          অনুগ্রহ করে পেজটি রিফ্রেশ করুন অথবা সার্ভার কানেকশন চেক করুন।
-        </p>
-      </div>
-    );
-  }
+/* ── Thana List For Filtering ── */
+const THANAS = [
+  { key: "all", label: "সকল থানা" },
+  { key: "barisal sadar", label: "বরিশাল সদর" },
+  { key: "bakerganj", label: "বাকেরগঞ্জ" },
+  { key: "wazirpur", label: "উজিরপুর" },
+  { key: "babuganj", label: "বাবুগঞ্জ" },
+  { key: "banaripara", label: "বানারীপাড়া" },
+  { key: "gournadi", label: "গৌরনদী" },
+  { key: "agailjhara", label: "আগৈলঝারা" },
+  { key: "mehendiganj", label: "মেহেন্দিগঞ্জ" },
+  { key: "muladi", label: "মুলাদী" },
+  { key: "hizla", label: "হিজলা" },
+];
 
-  const rawStations: FireStation[] =
-    fireStationsData?.data || fireStationsData || [];
-  const stations = rawStations.filter((station) => !station.isDeleted);
+/* ── Animation Config ── */
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.03 } },
+};
 
-  // সার্চ ফিল্টারিং
-  const filteredStations = stations.filter((station) => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      station.name?.toLowerCase().includes(searchLower) ||
-      station.area?.toLowerCase().includes(searchLower)
-    );
+const card = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 300, damping: 25 },
+  },
+};
+
+const AllFireServices = () => {
+  // ১. আরটিকে কোয়েরি দিয়ে ডাটা ফেচ করা
+  const { data, isLoading, error } = useGetAllFireStationQuery(undefined)
+
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [selectedThana, setSelectedThana] = useState("all"); // থানার স্টেট
+
+  // প্যাগিনেশন স্টেট
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+
+  // একটিভ ফায়ার সার্ভিস ফিল্টার (isDeleted: false)
+  const fireServices: IFireService[] = (data?.data ?? []).filter(
+    (item: IFireService) => !item.isDeleted,
+  );
+
+  // কম্বাইন্ড ফিল্টারিং লজিক (টাইপ + থানা + সার্চ)
+  const filtered = fireServices.filter((item) => {
+    const okType = filter === "all" || item.type === filter;
+
+    const okThana =
+      selectedThana === "all" ||
+      item.thana?.trim().toLowerCase() === selectedThana.toLowerCase();
+
+    const okSearch = [item.name, item.area, item.thana, ...(item.phone ?? [])]
+      .filter(Boolean)
+      .some((s) => s.toLowerCase().includes(search.toLowerCase()));
+
+    return okType && okThana && okSearch;
   });
 
+  // প্যাগিনেশন ক্যালকুলেশন
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayedServices = filtered.slice(startIndex, endIndex);
+
+  // ইনপুট চেঞ্জ হ্যান্ডলার (পেজ ১ নম্বরে রিসেট করবে)
+  const handleFilterChange = (type: string) => {
+    setFilter(type);
+    setCurrentPage(1);
+  };
+
+  const handleThanaChange = (thana: string) => {
+    setSelectedThana(thana);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 font-sans">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* হেডার প্যানেল */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl border border-rose-100">
-              <FiShield size={24} className="animate-pulse" />
-            </div>
-            <div>
-              <h1 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">
-                ফায়ার সার্ভিস স্টেশনসমূহ
-              </h1>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
-                বরিশাল বিভাগের সব একটিভ ফায়ার সার্ভিস ও সিভিল ডিফেন্স স্টেশনের
-                তালিকা ও জরুরি কন্টাক্ট।
-              </p>
-            </div>
-          </div>
-
-          <Link
-            to="/dashboard/add-fire-station"
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-orange-600 text-white font-bold text-xs shadow-md shadow-rose-600/10 hover:shadow-lg hover:shadow-rose-600/20 active:scale-[0.98] transition-all no-underline"
-          >
-            <FiPlus size={16} /> নতুন স্টেশন যুক্ত করুন
-          </Link>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-5 md:p-8">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">
+            🚒 ফায়ার সার্ভিস তালিকা
+          </h2>
+          <p className="text-sm text-gray-500 font-medium">
+            পেজ {currentPage} / {totalPages || 1} (মোট স্টেশন: {filtered.length}
+            )
+          </p>
         </div>
 
-        {/* সার্চ বার */}
-        <div className="relative w-full max-w-md">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
-            <FiSearch size={16} />
-          </span>
+        {/* CONTROLS (SEARCH + THANA + TYPE) */}
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* SEARCH */}
           <input
-            type="text"
-            placeholder="স্টেশনের নাম বা এলাকা দিয়ে খুঁজুন..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white text-gray-900 text-sm pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10 outline-none transition-all font-medium shadow-sm"
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="খুঁজুন (নাম/স্থান/ফোন)..."
+            className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-red-200 outline-none w-full sm:w-48 md:w-56 transition-all shadow-sm"
           />
-        </div>
 
-        {/* গ্রিড ভিউ */}
-        {filteredStations.length === 0 ? (
-          <div className="text-center bg-white border border-gray-100 rounded-2xl p-12 shadow-sm">
-            <p className="text-sm font-bold text-gray-400">
-              আপনার সার্চ করা নামের কোনো ফায়ার স্টেশন পাওয়া যায়নি!
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredStations.map((station, idx) => (
-              <motion.div
-                key={station._id || idx}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.03 }}
-                className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-gray-200/80 transition-all flex flex-col overflow-hidden group"
+          {/* THANA FILTER DROPDOWN */}
+          <select
+            value={selectedThana}
+            onChange={(e) => handleThanaChange(e.target.value)}
+            className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-red-200 transition-all shadow-sm cursor-pointer"
+          >
+            {THANAS.map((t) => (
+              <option key={t.key} value={t.key}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+
+          {/* TYPE TABS */}
+          <div className="flex gap-1 bg-white border rounded-xl p-1 shadow-sm overflow-x-auto">
+            {FILTERS.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => handleFilterChange(f.key)}
+                className={`px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium transition whitespace-nowrap ${
+                  filter === f.key
+                    ? "bg-red-600 text-white shadow"
+                    : "text-gray-500 hover:bg-gray-100"
+                }`}
               >
-                {/* কার্ড কন্টেন্ট */}
-                <div className="p-5 flex-1 space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <h3 className="font-black text-gray-900 text-base group-hover:text-rose-600 transition-colors leading-tight">
-                        {station.name}
-                      </h3>
-                      <p className="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100/50 px-2 py-0.5 rounded-md inline-block uppercase tracking-wider">
-                        {station.type}
-                      </p>
-                    </div>
-
-                    {/* 🟢 লাইভ ব্লিংকিং অ্যাক্টিভ ইন্ডিকেটর ইন্ডিকেটর */}
-                    <span className="px-2.5 py-1 text-[10px] font-black uppercase rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100/80 flex items-center gap-1.5 flex-shrink-0 shadow-sm select-none">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                      {station.status === "active" ? "Active" : station.status}
-                    </span>
-                  </div>
-
-                  {/* লোকেশন */}
-                  <div className="space-y-2 text-xs font-bold text-gray-600">
-                    <div className="flex items-center gap-1.5">
-                      <FiMapPin
-                        size={13}
-                        className="text-rose-500 flex-shrink-0"
-                      />
-                      <span>{station.area}</span>
-                    </div>
-                  </div>
-
-                  <hr className="border-gray-100" />
-
-                  {/* কন্টাক্ট লিস্ট */}
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
-                      জরুরি যোগাযোগ মাধ্যম
-                    </label>
-                    <div className="space-y-1.5">
-                      {station.phone?.map((num, pIdx) => {
-                        const isHotline = num.length <= 5;
-                        return (
-                          <div
-                            key={pIdx}
-                            className="flex items-center justify-between bg-gray-50 border border-gray-100 px-3 py-2 rounded-xl text-xs font-mono font-bold text-gray-800 hover:bg-rose-50/30 hover:border-rose-100 transition-all"
-                          >
-                            <span className="flex items-center gap-2">
-                              <FiPhone size={12} className="text-gray-400" />
-                              {num}
-                            </span>
-                            <span
-                              className={`px-1.5 py-0.5 text-[9px] font-black rounded-md ${
-                                isHotline
-                                  ? "bg-amber-50 text-amber-700 border border-amber-200"
-                                  : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              }`}
-                            >
-                              {isHotline
-                                ? "Hotline"
-                                : `${num.replace(/[^0-9]/g, "").length} Digit`}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-              </motion.div>
+                {f.label}
+              </button>
             ))}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* RENDER STATES */}
+      {isLoading ? (
+        <Loader />
+      ) : error ? (
+        <p className="text-center py-20 text-red-500 font-semibold">
+          ডাটা লোড করতে সমস্যা হচ্ছে! আবার চেষ্টা করুন।
+        </p>
+      ) : (
+        <>
+          {/* CARDS GRID */}
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            key={currentPage}
+            className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+          >
+            <AnimatePresence mode="wait">
+              {displayedServices.length === 0 ? (
+                <p className="col-span-full text-center text-gray-400 py-20 font-medium">
+                  কোনো স্টেশন বা সার্ভিস পাওয়া যায়নি।
+                </p>
+              ) : (
+                displayedServices.map((item) => {
+                  const t = typeMap[item.type] || typeMap.government;
+                  const currentThanaLabel =
+                    THANAS.find((th) => th.key === item.thana?.toLowerCase())
+                      ?.label || item.thana;
+
+                  return (
+                    <motion.div
+                      key={item._id}
+                      variants={card}
+                      whileHover={{
+                        y: -5,
+                        boxShadow: "0 15px 30px rgba(0,0,0,0.06)",
+                      }}
+                      className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm cursor-pointer group flex flex-col justify-between"
+                    >
+                      <div>
+                        {/* TOP BAR COLOR */}
+                        <div className={`h-1 bg-gradient-to-r ${t.color}`} />
+
+                        <div className="p-4 pb-2">
+                          {/* TITLE */}
+                          <h3 className="text-base md:text-lg font-bold text-gray-800 group-hover:text-red-600 transition line-clamp-1">
+                            {item.name}
+                          </h3>
+
+                          <div className="flex gap-1.5 mt-1 items-center">
+                            {/* TYPE BADGE */}
+                            <span
+                              className={`text-[11px] px-2 py-0.5 rounded-md border font-medium ${t.badge}`}
+                            >
+                              {t.label}
+                            </span>
+
+                            {/* STATUS BADGE */}
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase ${
+                                item.status === "active"
+                                  ? "bg-green-50 text-green-600 border border-green-200"
+                                  : "bg-gray-100 text-gray-500"
+                              }`}
+                            >
+                              {item.status === "active" ? "Active" : "Inactive"}
+                            </span>
+                          </div>
+
+                          {/* DETAILS */}
+                          <div className="mt-3 space-y-2 text-sm text-gray-600">
+                            <p className="flex items-center gap-2">
+                              📍{" "}
+                              <span className="font-semibold text-gray-700">
+                                {currentThanaLabel}
+                                {item.area ? `, ${item.area}` : ""}
+                              </span>
+                            </p>
+
+                            <div className="pt-1 space-y-1">
+                              {item.phone?.map((p, i) => (
+                                <p
+                                  key={i}
+                                  className="flex items-center gap-2 font-mono text-gray-700 font-medium bg-gray-50 px-2 py-1 rounded border border-gray-100 w-fit"
+                                >
+                                  📞 {p}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* CARD FOOTER */}
+                      <div className="p-4 pt-0 mt-3 border-t border-gray-50 flex justify-between items-center bg-gray-50/50">
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">
+                          {item.type}
+                        </span>
+                        <div className="flex gap-1.5">
+                          <button className="text-xs px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg border border-blue-100 hover:bg-blue-100 transition font-medium">
+                            Edit
+                          </button>
+                          <button className="text-xs px-2.5 py-1 bg-red-50 text-red-500 rounded-lg border border-red-100 hover:bg-red-100 transition font-medium">
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* PAGINATION CONTROLS */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-10 pb-5">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 rounded-xl border bg-white text-gray-600 hover:bg-gray-50 font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                ◀ Previous
+              </button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, index) => {
+                  const pageNumber = index + 1;
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`w-9 h-9 text-xs font-semibold rounded-xl transition-all duration-200 ${
+                        currentPage === pageNumber
+                          ? "bg-red-600 text-white shadow-md shadow-red-200"
+                          : "bg-white text-gray-600 border hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 rounded-xl border bg-white text-gray-600 hover:bg-gray-50 font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Next ▶
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
 
-export default All_Fire_Service_Station;
+export default AllFireServices;
