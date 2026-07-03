@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -47,7 +48,7 @@ const AddPoliceStation = () => {
   // ফোন ইনপুট হ্যান্ডলার (শুধুমাত্র সংখ্যা এবং সর্বোচ্চ ১১ ডিজিট রেস্ট্রিকশন)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const filteredValue = value.replace(/\D/g, ""); // সংখ্যা ছাড়া বাকি সব বাদ
+    const filteredValue = value.replace(/\D/g, ""); // সংখ্যা ছাড়া বাকি সব বাদ
 
     if (filteredValue.length <= 11) {
       setFormData((prev) => ({ ...prev, [name]: filteredValue }));
@@ -58,13 +59,10 @@ const AddPoliceStation = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ফ্রন্টএন্ড ট্রিম (Trim) ভ্যালিডেশন
-    if (!formData.thanaName.getTrimmedValue) {
-      const tName = formData.thanaName.trim();
-      if (!tName) {
-        toast.error("থানার নাম প্রয়োজন");
-        return;
-      }
+    // ফ্রন্টএন্ড ট্রিম (Trim) ভ্যালিডেশন ফিক্সড
+    if (!formData.thanaName.trim()) {
+      toast.error("থানার নাম প্রয়োজন");
+      return;
     }
     if (!formData.ocName.trim()) {
       toast.error("ওসির নাম প্রয়োজন");
@@ -87,8 +85,7 @@ const AddPoliceStation = () => {
       return;
     }
 
-    // 💡 সমাধান: ব্যাকএন্ডের Zod স্কিমা সরাসরি রিকোয়েস্ট বডিতে ফিল্ডগুলো খোঁজে।
-    // তাই এক্সট্রা ডাবল 'body' লেয়ার তৈরি না করে সরাসরি অবজেক্টটি পাস করা হলো।
+    // সাবমিট ডাটা অবজেক্ট তৈরি
     const submitData = {
       thanaName: formData.thanaName.trim(),
       location: formData.location.trim(),
@@ -105,7 +102,7 @@ const AddPoliceStation = () => {
       // রিডাক্স মিউটেশন ট্রিগার
       await addPoliceStation(submitData).unwrap();
 
-      toast.success("সফলভাবে নতুন পুলিশ স্টেশন যুক্ত হয়েছে!", { id: toastId });
+      toast.success("সফলভাবে নতুন পুলিশ স্টেশন যুক্ত হয়েছে!", { id: toastId });
 
       // স্টেট ক্লিন করা
       setFormData({
@@ -120,7 +117,7 @@ const AddPoliceStation = () => {
       navigate("/dashboard/all-police");
     } catch (error: any) {
       console.error("Redux Submit Error: ", error);
-      toast.error(error?.data?.message || "স্টেশন যোগ করতে ব্যর্থ হয়েছে!", {
+      toast.error(error?.data?.message || "স্টেশন যোগ করতে ব্যর্থ হয়েছে!", {
         id: toastId,
       });
     }
@@ -140,7 +137,7 @@ const AddPoliceStation = () => {
             to="/dashboard/all-police"
             className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 no-underline transition-colors font-medium"
           >
-            <FiArrowLeft size={16} /> তালিকায় ফিরে যান
+            <FiArrowLeft size={16} /> তালিকায় ফিরে যান
           </Link>
         </div>
 
@@ -157,8 +154,8 @@ const AddPoliceStation = () => {
                   নতুন থানা/স্টেশন যুক্ত করুন
                 </h2>
                 <p className="text-xs text-blue-100 mt-0.5">
-                  প্রশাসনিক এলাকার সঠিক বিবরণ, দ্বায়িত্বরত কর্মকর্তা এবং যোগাযোগ
-                  নম্বর এন্ট্রি করুন।
+                  প্রশাসনিক এলাকার সঠিক বিবরণ, দ্বায়িত্বরত কর্মকর্তা এবং
+                  যোগাযোগ নম্বর এন্ট্রি করুন।
                 </p>
               </div>
             </div>
@@ -171,7 +168,7 @@ const AddPoliceStation = () => {
               {/* থানার নাম */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
-                  থানা / ফাঁড়ির নাম <span className="text-red-500">*</span>
+                  থানা / ফাঁড়ির নাম <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <FiShield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -190,7 +187,7 @@ const AddPoliceStation = () => {
               {/* ওসির নাম */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
-                  দ্বায়িত্বরত কর্মকর্তা (OC) নাম{" "}
+                  দ্বায়িত্বরত কর্মকর্তা (OC) নাম{" "}
                   <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -268,7 +265,7 @@ const AddPoliceStation = () => {
               {/* কন্ট্রোল রুম নম্বর (ঐচ্ছিক) */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
-                  কন্ট্রোল রুম নম্বর (ঐচ্ছিক)
+                  কন্তট্রোল রুম নম্বর (ঐচ্ছিক)
                 </label>
                 <div className="relative">
                   <FiPhone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -303,7 +300,7 @@ const AddPoliceStation = () => {
               </div>
             </div>
 
-            {/* অ্যাকশন বাটন এরিয়া */}
+            {/* অ্যাকশন বাটন এরিয়া */}
             <div className="pt-4 border-t border-gray-50 flex justify-end gap-3">
               <button
                 type="button"

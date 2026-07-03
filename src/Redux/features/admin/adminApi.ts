@@ -146,6 +146,13 @@ const adminApi = baseApi.injectEndpoints({
          }),
          invalidatesTags: ["imam-muazzin"], // নতুন স্টেশন অ্যাড হলেই যেন অল-স্টেশন পেজ অটো রিফ্রেশ হয়
       }),
+      deleteImamMuzzain: builder.mutation<any, string>({
+         query: (id) => ({
+            url: `/imam-muazzin/${id}`, // ডিলিট করার জন্য ডাইনামিক আইডি রাউট
+            method: "DELETE",
+         }),
+         invalidatesTags: ["imam-muazzin"], // ডিলিট হওয়ার সাথে সাথে লিস্ট পেজ অটো রিফ্রেশ হবে
+      }),
       addPoliceStation: builder.mutation<any, any>({
          query: (data) => ({
             url: '/police/add-station', // আপনার ব্যাকএন্ডের সঠিক রাউট দিন
@@ -272,5 +279,6 @@ export const {
    useGetAllImamMuzzainQuery,
    useAddImamMuzzainMutation,
    useGetAllInstitutionsQuery,
-   useAddInstituteMutation
+   useAddInstituteMutation,
+   useDeleteImamMuzzainMutation
 } = adminApi;
