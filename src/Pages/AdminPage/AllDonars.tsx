@@ -32,7 +32,7 @@ const AllDonors = () => {
 
   // 📄 পেজিনেশন স্টেট
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 12; // প্রতি পেজে ১২টি ডাটা
+  const itemsPerPage = 10; // প্রতি পেজে 10টি ডাটা
 
   // ডোনারদের লিস্ট এক্সট্র্যাক্ট করা
   const donorsList = donorsRes?.data || donorsRes || [];

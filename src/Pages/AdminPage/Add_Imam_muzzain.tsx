@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion as FramerMotion } from "framer-motion";
 import {
   FiUser,
   FiPhone,
@@ -12,21 +12,34 @@ import {
 import { useAddImamMuzzainMutation } from "../../Redux/features/admin/adminApi";
 import { Link } from "react-router-dom";
 
+// বরিশালের ফিক্সড থানা লিস্ট
+const THANAS = [
+  { name: "বরিশাল সদর (Barisal Sadar)", value: "Barisal Sadar" },
+  { name: "বাকেরগঞ্জ (Bakerganj)", value: "Bakerganj" },
+  { name: "উজিরপুর (Wazirpur)", value: "Wazirpur" },
+  { name: "বাবুগঞ্জ (Babuganj)", value: "Babuganj" },
+  { name: "বানারীপাড়া (Banaripara)", value: "Banaripara" },
+  { name: "গৌরনদী (Gournadi)", value: "Gournadi" },
+  { name: "আগৈলঝারা (Agailjhara)", value: "Agailjhara" },
+  { name: "মেহেন্দিগঞ্জ (Mehendiganj)", value: "Mehendiganj" },
+  { name: "মুলাদী (Muladi)", value: "Muladi" },
+  { name: "হিজলা (Hizla)", value: "Hizla" },
+];
+
 interface IImamMuazzinForm {
   name: string;
-  role: "imam" | "muazzin" | "";
+  role: "imam" | "muazzin" | "both" | ""; // 'both' অপশন ব্যাকএন্ড অনুযায়ী যোগ করা হলো
   phone: string;
   division: string;
   district: string;
-  upazila: string;
+  thana: string;
   union: string;
   village: string;
   fullAddress: string;
-  employmentStatus: "available" | "employed";
+  employmentStatus: "available" | "hired"; // 'employed' পরিবর্তন করে 'hired' করা হলো
 }
 
 const Add_Imam_muzzain = () => {
-  // RTK Query থেকে isLoading এবং error অবজেক্ট নিয়ে আসা হয়েছে
   const [addImamMuazzinMutation, { isLoading, error: apiError }] =
     useAddImamMuzzainMutation();
 
@@ -34,13 +47,13 @@ const Add_Imam_muzzain = () => {
     name: "",
     role: "",
     phone: "",
-    division: "",
-    district: "",
-    upazila: "",
+    division: "বরিশাল",
+    district: "বরিশাল",
+    thana: "",
     union: "",
     village: "",
     fullAddress: "",
-    employmentStatus: "available",
+    employmentStatus: "available", // ডিফল্ট ভ্যালু
   });
 
   const [errors, setErrors] = useState<
@@ -84,16 +97,14 @@ const Add_Imam_muzzain = () => {
     if (!formData.phone.trim()) {
       tempErrors.phone = "মোবাইল নম্বর আবশ্যক";
     } else if (!phoneRegex.test(formData.phone.trim())) {
-      tempErrors.phone = "সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 01711123456)";
+      tempErrors.phone = "সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন";
     }
 
-    if (!formData.division.trim()) tempErrors.division = "বিভাগ আবশ্যক";
+    
     if (!formData.district.trim()) tempErrors.district = "জেলা আবশ্যক";
-    if (!formData.upazila.trim()) tempErrors.upazila = "উপজেলা আবশ্যক";
-    if (!formData.union.trim()) tempErrors.union = "ইউনিয়ন আবশ্যক";
+    if (!formData.thana) tempErrors.thana = "থানা নির্বাচন করা আবশ্যক";
     if (!formData.village.trim()) tempErrors.village = "গ্রামের নাম আবশ্যক";
-    if (!formData.fullAddress.trim())
-      tempErrors.fullAddress = "বিস্তারিত ঠিকানা আবশ্যক";
+   
 
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -105,28 +116,24 @@ const Add_Imam_muzzain = () => {
 
     if (validateForm()) {
       try {
-        // RTK Query এপিআই কল
         await addImamMuazzinMutation(formData).unwrap();
 
-        // সফল হলে স্টেট আপডেট ও ফর্ম ক্লিয়ার
         setSubmitSuccess(true);
         setFormData({
           name: "",
           role: "",
           phone: "",
-          division: "",
-          district: "",
-          upazila: "",
+          division: "বরিশাল",
+          district: "বরিশাল",
+          thana: "",
           union: "",
           village: "",
           fullAddress: "",
           employmentStatus: "available",
         });
 
-        // ৩ সেকেন্ড পর সাকসেস মেসেজ অটো হাইড করার জন্য
         setTimeout(() => setSubmitSuccess(false), 4000);
       } catch (err) {
-        // এপিআই এরর কনসোলে ট্র্যাকিং
         console.error("Submission failed:", err);
       }
     }
@@ -135,7 +142,7 @@ const Add_Imam_muzzain = () => {
   return (
     <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 font-sans antialiased text-slate-800">
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* টপ ব্যাক ও হেডার পার্ট */}
+        {/* টপ ব্যাক বাটন */}
         <div className="flex items-center justify-between">
           <Link to="/dashboard/all-imam-muazzin">
             <button
@@ -148,7 +155,7 @@ const Add_Imam_muzzain = () => {
         </div>
 
         {/* মেইন ফর্ম কার্ড */}
-        <motion.div
+        <FramerMotion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden p-6 sm:p-8"
@@ -166,40 +173,40 @@ const Add_Imam_muzzain = () => {
             </p>
           </div>
 
-          {/* সাকসেস নোটিফিকেশন ব্যানার */}
+          {/* সাকসেস মেসেজ */}
           {submitSuccess && (
-            <motion.div
+            <FramerMotion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800 flex items-center gap-3 text-sm font-bold"
             >
               <FiCheckCircle size={20} className="text-emerald-600 shrink-0" />
               সফলভাবে নতুন সদস্য ডাটাবেজে যুক্ত করা হয়েছে!
-            </motion.div>
+            </FramerMotion.div>
           )}
 
-          {/* সার্ভার/ব্যাকএন্ড এরর ব্যানার */}
+          {/* এরর মেসেজ */}
           {apiError && (
-            <motion.div
+            <FramerMotion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-800 flex items-center gap-3 text-sm font-bold"
             >
               <FiAlertCircle size={20} className="text-red-600 shrink-0" />
               {(apiError as any)?.data?.message ||
-                "সার্ভারে সমস্যা হয়েছে! অনুগ্রহ করে আবার চেষ্টা করুন।"}
-            </motion.div>
+                "সার্ভারে সমস্যা হয়েছে! আবার চেষ্টা করুন।"}
+            </FramerMotion.div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* ১. বেসিক ইনফরমেশন সেকশন */}
+            {/* প্রাথমিক তথ্য */}
             <div className="space-y-4">
               <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
                 <FiUser size={14} /> প্রাথমিক তথ্য (Basic Info)
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* নাম ইনপুট */}
+                {/* নাম */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700">
                     পূর্ণ নাম *
@@ -219,7 +226,7 @@ const Add_Imam_muzzain = () => {
                   )}
                 </div>
 
-                {/* পদবী নির্বাচন */}
+                {/* পদবী */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700">
                     পদবী (Role) *
@@ -233,6 +240,8 @@ const Add_Imam_muzzain = () => {
                     <option value="">নির্বাচন করুন</option>
                     <option value="imam">ইмам (Imam)</option>
                     <option value="muazzin">মুয়াজ্জিন (Muazzin)</option>
+                    <option value="both">উভয়ই (Both)</option>{" "}
+                    {/* ব্যাকএন্ডের 'both' এখানে অ্যাড করা হলো */}
                   </select>
                   {errors.role && (
                     <p className="text-xs font-bold text-red-500 flex items-center gap-1 mt-1">
@@ -241,7 +250,7 @@ const Add_Imam_muzzain = () => {
                   )}
                 </div>
 
-                {/* ফোন নম্বর */}
+                {/* ফোন */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700">
                     মো바일 নম্বর *
@@ -266,7 +275,7 @@ const Add_Imam_muzzain = () => {
                   )}
                 </div>
 
-                {/* কর্মসংস্থান স্ট্যাটাস */}
+                {/* স্ট্যাটাস ড্রপডাউন (FIXED) */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700">
                     কর্মসংস্থান স্ট্যাটাস
@@ -280,7 +289,10 @@ const Add_Imam_muzzain = () => {
                     <option value="available">
                       এভেইলেবল / ফ্রি আছেন (Available)
                     </option>
-                    <option value="employed">কর্মরত আছেন (Employed)</option>
+                    <option value="hired">
+                      নিয়োগপ্রাপ্ত / কর্মরত (Hired)
+                    </option>{" "}
+                    {/* ভ্যালু পরিবর্তন করে ব্যাকএন্ডের মতো 'hired' করা হয়েছে */}
                   </select>
                 </div>
               </div>
@@ -288,32 +300,14 @@ const Add_Imam_muzzain = () => {
 
             <hr className="border-slate-100" />
 
-            {/* ২. ঠিকানা ও অবস্থান সেকশন */}
+            {/* ঠিকানা ও অবস্থান */}
             <div className="space-y-4">
               <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
                 <FiMapPin size={14} /> ঠিকানা ও অবস্থান (Address & Location)
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* বিভাগ */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-700">
-                    বিভাগ *
-                  </label>
-                  <input
-                    type="text"
-                    name="division"
-                    value={formData.division}
-                    onChange={handleChange}
-                    placeholder="যেমন: বরিশাল"
-                    className={`w-full px-4 py-2.5 bg-white border ${errors.division ? "border-red-400" : "border-slate-200 focus:border-emerald-500"} rounded-xl outline-none transition-all font-medium text-sm`}
-                  />
-                  {errors.division && (
-                    <p className="text-[11px] font-bold text-red-500 mt-0.5">
-                      {errors.division}
-                    </p>
-                  )}
-                </div>
+               
 
                 {/* জেলা */}
                 <div className="space-y-1.5">
@@ -325,32 +319,32 @@ const Add_Imam_muzzain = () => {
                     name="district"
                     value={formData.district}
                     onChange={handleChange}
-                    placeholder="যেমন: বরিশাল"
-                    className={`w-full px-4 py-2.5 bg-white border ${errors.district ? "border-red-400" : "border-slate-200 focus:border-emerald-500"} rounded-xl outline-none transition-all font-medium text-sm`}
+                    disabled
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none transition-all font-medium text-sm"
                   />
-                  {errors.district && (
-                    <p className="text-[11px] font-bold text-red-500 mt-0.5">
-                      {errors.district}
-                    </p>
-                  )}
                 </div>
 
-                {/* উপজেলা */}
+                {/* থানা ড্রপডাউন */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700">
-                    উপজেলা *
+                    থানা / উপজেলা *
                   </label>
-                  <input
-                    type="text"
-                    name="upazila"
-                    value={formData.upazila}
+                  <select
+                    name="thana"
+                    value={formData.thana}
                     onChange={handleChange}
-                    placeholder="যেমন: বাকেরগঞ্জ"
-                    className={`w-full px-4 py-2.5 bg-white border ${errors.upazila ? "border-red-400" : "border-slate-200 focus:border-emerald-500"} rounded-xl outline-none transition-all font-medium text-sm`}
-                  />
-                  {errors.upazila && (
+                    className={`w-full px-4 py-2.5 bg-white border ${errors.thana ? "border-red-400 focus:ring-red-500/5" : "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/5"} focus:ring-4 rounded-xl outline-none transition-all font-bold text-sm text-slate-700 cursor-pointer`}
+                  >
+                    <option value="">থানা নির্বাচন করুন</option>
+                    {THANAS.map((thana) => (
+                      <option key={thana.value} value={thana.value}>
+                        {thana.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.thana && (
                     <p className="text-[11px] font-bold text-red-500 mt-0.5">
-                      {errors.upazila}
+                      {errors.thana}
                     </p>
                   )}
                 </div>
@@ -358,21 +352,16 @@ const Add_Imam_muzzain = () => {
                 {/* ইউনিয়ন */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700">
-                    ইউনিয়ন *
+                    ইউনিয়ন
                   </label>
                   <input
                     type="text"
                     name="union"
                     value={formData.union}
                     onChange={handleChange}
-                    placeholder="যেমন: দাড়িয়াল"
-                    className={`w-full px-4 py-2.5 bg-white border ${errors.union ? "border-red-400" : "border-slate-200 focus:border-emerald-500"} rounded-xl outline-none transition-all font-medium text-sm`}
+                    placeholder="যেমন: দাড়িয়াল (ঐচ্ছিক)"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none transition-all font-medium text-sm"
                   />
-                  {errors.union && (
-                    <p className="text-[11px] font-bold text-red-500 mt-0.5">
-                      {errors.union}
-                    </p>
-                  )}
                 </div>
 
                 {/* গ্রাম */}
@@ -396,45 +385,27 @@ const Add_Imam_muzzain = () => {
                 </div>
               </div>
 
-              {/* বিস্তারিত/পূর্ণ ঠিকানা */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-black text-slate-700">
-                  পূর্ণাঙ্গ ঠিকানা *
-                </label>
-                <textarea
-                  name="fullAddress"
-                  value={formData.fullAddress}
-                  onChange={handleChange}
-                  rows={2}
-                  placeholder="গ্রাম, ইউনিয়ন, উপজেলা, জেলা সাজিয়ে লিখুন..."
-                  className={`w-full px-4 py-2.5 bg-white border ${errors.fullAddress ? "border-red-400" : "border-slate-200 focus:border-emerald-500"} rounded-xl outline-none transition-all font-medium text-sm text-slate-900 resize-none`}
-                />
-                {errors.fullAddress && (
-                  <p className="text-xs font-bold text-red-500 flex items-center gap-1 mt-0.5">
-                    <FiAlertCircle size={12} /> {errors.fullAddress}
-                  </p>
-                )}
-              </div>
+            
             </div>
 
-            {/* সাবমিট অ্যাকশন বাটন সেকশন */}
+            {/* সাবমিট বাটন */}
             <div className="pt-4 flex justify-end">
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-lg shadow-slate-900/10 active:scale-98 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-lg active:scale-98 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
               >
                 {isLoading ? (
                   <>ডাটা সেভ হচ্ছে...</>
                 ) : (
                   <>
-                    <FiSave size={16} /> সংরক্ষণ করুন (Save Profile)
+                    <FiSave size={16} /> সংরক্ষণ করুন
                   </>
                 )}
               </button>
             </div>
           </form>
-        </motion.div>
+        </FramerMotion.div>
       </div>
     </div>
   );

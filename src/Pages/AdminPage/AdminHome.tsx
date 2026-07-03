@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { FiPlus, FiEye, FiTrendingUp, FiActivity } from "react-icons/fi";
 import {
   useGetAllAmbulanceQuery,
+  useGetAllDoctorsQuery,
   useGetAllHospitalsQuery,
   useGetAllLawyersQuery,
   useGetAllUsersQuery,
@@ -138,13 +139,16 @@ const AdminHome = () => {
     useGetAllUsersQuery(undefined);
   const { data: ambulances, isLoading: isAmbulancesLoading } =
     useGetAllAmbulanceQuery(undefined);
+  const { data: doctors, isLoading: isDoctorsLoading } =
+    useGetAllDoctorsQuery(undefined);
 
   // Show the loader if any of the major API requests are still loading
   if (
     isHospitalsLoading ||
     isLawyersLoading ||
     isUsersLoading ||
-    isAmbulancesLoading
+    isAmbulancesLoading ||
+    isDoctorsLoading
   ) {
     return <Loader />;
   }
@@ -154,6 +158,7 @@ const AdminHome = () => {
   const total_users = (users as { data: unknown[] })?.data?.length || 0;
   const total_ambulances =
     (ambulances as { data: unknown[] })?.data?.length || 0;
+  const total_doctors = (doctors as { data: unknown[] })?.data?.length || 0;
 
   const stats = [
     {
@@ -166,6 +171,16 @@ const AdminHome = () => {
       text: "text-blue-600",
       trend: "text-blue-500",
     },
+   {
+  label: "মোট নিবন্ধিত ডাক্তার",
+  value: total_doctors,
+  change: "+2 এই মাসে",
+  icon: "🏥",
+  bg: "bg-rose-50",
+  iconBg: "bg-rose-100",
+  text: "text-rose-600",
+  trend: "text-rose-500",
+},
     {
       label: "মোট আইনজীবী",
       value: total_lawyers,

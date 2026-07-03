@@ -11,18 +11,19 @@ import {
   FiDollarSign,
   FiLayers,
   FiFileText,
+  FiChevronDown,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { useAddCarMutation } from "../../Redux/features/admin/adminApi";
 import { toast } from "sonner";
 
-// ১. টাইপস্ক্রিপ্ট এরর ফিক্স করার জন্য ইন্টারফেস ডিফাইন
+// ১. টাইপস্ক্রিপ্ট ইন্টারফেস ডিফাইন
 interface CarFormData {
   serviceName: string;
   proprietorName: string;
   description: string;
   area: string;
-  upazila: string;
+  thana: string; // ব্যাকএন্ড রিকোয়ারমেন্ট অনুযায়ী 'thana' করা হয়েছে
   serviceArea: string;
   whatsapp: string;
   rentPerDay: string | number;
@@ -39,17 +40,31 @@ const AVAILABLE_CAR_TYPES = [
   { label: "Pickup", value: "pickup" },
 ];
 
+// বরিশালের থানাগুলোর লিস্ট (ড্রপডাউনের জন্য)
+const BARISAL_THANAS = [
+  { key: "barisal sadar", label: "বরিশাল সদর" },
+  { key: "bakerganj", label: "বাকেরগঞ্জ" },
+  { key: "wazirpur", label: "উজিরপুর" },
+  { key: "babuganj", label: "বাবুগঞ্জ" },
+  { key: "banaripara", label: "বানারীপাড়া" },
+  { key: "gournadi", label: "গৌরনদী" },
+  { key: "agailjhara", label: "আগৈলঝারা" },
+  { key: "mehendiganj", label: "মেহেন্দিগঞ্জ" },
+  { key: "muladi", label: "মুলাদী" },
+  { key: "hizla", label: "হিজলা" },
+];
+
 const Add_Rent_A_Car = () => {
   const [addCar, { isLoading }] = useAddCarMutation();
   const navigate = useNavigate();
 
-  // ২. ইন্টারফেস অনুযায়ী স্টেট ডিক্লেয়ারেশন
+  // ২. স্টেট ডিক্লেয়ারেশন
   const [formData, setFormData] = useState<CarFormData>({
     serviceName: "",
     proprietorName: "",
     description: "",
     area: "",
-    upazila: "",
+    thana: "", // ড্রপডাউন থেকে ভ্যালু সেট হবে
     serviceArea: "",
     whatsapp: "",
     rentPerDay: "",
@@ -61,9 +76,11 @@ const Add_Rent_A_Car = () => {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ৩. ইনপুট চেঞ্জ হ্যান্ডলার (টাইপস্ক্রিপ্ট সেফ)
+  // ৩. ইনপুট চেঞ্জ হ্যান্ডলার
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
 
@@ -81,7 +98,7 @@ const Add_Rent_A_Car = () => {
     }
   };
 
-  // ৪. হোয়াটসঅ্যাপ নম্বর ইনপুট ও লক মেকানিজম
+  // ৪. হোয়াটসঅ্যাপ নম্বর হ্যান্ডলার
   const handleWhatsappChange = (value: string) => {
     const cleanValue = value.replace(/[^0-9]/g, "").slice(0, 11);
     setFormData((prev) => ({ ...prev, whatsapp: cleanValue }));
@@ -100,7 +117,7 @@ const Add_Rent_A_Car = () => {
     }
   };
 
-  // ৫. ডাইনামিক মোবাইল নম্বর ইনপুট ও লক মেকানিজম
+  // ৫. ডাইনামিক মোবাইল নম্বর হ্যান্ডলার
   const handlePhoneChange = (index: number, value: string) => {
     const cleanValue = value.replace(/[^0-9]/g, "").slice(0, 11);
     const updatedPhones = [...phones];
@@ -151,7 +168,7 @@ const Add_Rent_A_Car = () => {
       newErrors.proprietorName = "প্রোপ্রাইটর নাম আবশ্যিক!";
     if (!formData.description.trim()) newErrors.description = "বিবরণ আবশ্যিক!";
     if (!formData.area.trim()) newErrors.area = "এلاকা উল্লেখ করুন!";
-    if (!formData.upazila.trim()) newErrors.upazila = "উপজেলা উল্লেখ করুন!";
+    if (!formData.thana) newErrors.thana = "উপজেলা/থানা সিলেক্ট করুন!"; // thana চেক
     if (!formData.serviceArea.trim())
       newErrors.serviceArea = "সার্ভিস কাভারেজ এরিয়া আবশ্যিক!";
     if (!formData.rentPerDay)
@@ -164,7 +181,7 @@ const Add_Rent_A_Car = () => {
 
     phones.forEach((phone, index) => {
       if (!phone.trim()) {
-        newErrors[`phone_${index}`] = "মোবাইল নম্বর দেওয়া আবশ্যিক!";
+        newErrors[`phone_${index}`] = "মোবাইল নম্বর দেওয়া আবশ্যিক!";
       } else if (phone.length !== 11) {
         newErrors[`phone_${index}`] =
           "মোবাইল নম্বরটি অবশ্যই ১১ ডিজিটের হতে হবে!";
@@ -175,6 +192,7 @@ const Add_Rent_A_Car = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // ৭. ফাইনাল সাবমিট হ্যান্ডলার
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -183,8 +201,16 @@ const Add_Rent_A_Car = () => {
       return toast.error("অনুগ্রহ করে কমপক্ষে একটি গাড়ির ধরন সিলেক্ট করুন!");
     }
 
+    // ব্যাকএন্ড Zod স্কিমার সাথে ম্যাচ করা অবজেক্ট স্ট্রাকচার
     const finalData = {
-      ...formData,
+      serviceName: formData.serviceName.trim(),
+      proprietorName: formData.proprietorName.trim(),
+      description: formData.description.trim(),
+      area: formData.area.trim(),
+      thana: formData.thana, // নিশ্চিতভাবে ডাটাবেজে স্ট্রিং ভ্যালু যাচ্ছে
+      serviceArea: formData.serviceArea.trim(),
+      whatsapp: formData.whatsapp,
+      status: formData.status,
       phone: phones,
       carTypes: selectedTypes,
       rentPerDay: Number(formData.rentPerDay),
@@ -210,13 +236,13 @@ const Add_Rent_A_Car = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 font-sans">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 font-sans antialiased text-gray-800">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* টপ হেডার */}
         <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100">
-              <FiTruck size={22} className="animate-bounce" />
+              <FiTruck size={22} className="animate-pulse" />
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">
@@ -230,7 +256,7 @@ const Add_Rent_A_Car = () => {
           </div>
           <Link
             to="/dashboard/all-cars"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-100 transition-all no-underline"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-100 transition-all no-underline shadow-sm hover:shadow"
           >
             <FiArrowLeft size={14} /> ফিরে যান
           </Link>
@@ -238,8 +264,9 @@ const Add_Rent_A_Car = () => {
 
         {/* মেইন ফর্ম */}
         <motion.form
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl border border-gray-100/90 shadow-sm overflow-hidden p-6 sm:p-8 space-y-6"
         >
@@ -261,7 +288,11 @@ const Add_Rent_A_Car = () => {
                   value={formData.serviceName}
                   onChange={handleInputChange}
                   placeholder="উদাঃ বরিশাল রেন্ট-এ-কার সার্ভিস"
-                  className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium"
+                  className={`w-full bg-gray-50/70 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-medium ${
+                    errors.serviceName
+                      ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                      : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
+                  }`}
                 />
                 {errors.serviceName && (
                   <span className="text-xs font-bold text-rose-500">
@@ -272,7 +303,7 @@ const Add_Rent_A_Car = () => {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                  <FiUser size={13} className="text-gray-400" /> প্রোপ্রাইটর নাম{" "}
+                  <FiUser size={13} className="text-gray-400" /> プロప్రাইটর নাম{" "}
                   <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -281,7 +312,11 @@ const Add_Rent_A_Car = () => {
                   value={formData.proprietorName}
                   onChange={handleInputChange}
                   placeholder="উদাঃ মোঃ জিহাদ ইসলাম"
-                  className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium"
+                  className={`w-full bg-gray-50/70 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-medium ${
+                    errors.proprietorName
+                      ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                      : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
+                  }`}
                 />
                 {errors.proprietorName && (
                   <span className="text-xs font-bold text-rose-500">
@@ -302,7 +337,11 @@ const Add_Rent_A_Car = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 placeholder="সার্ভিস সম্পর্কে বিস্তারিত বিবরণ লিখুন..."
-                className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium"
+                className={`w-full bg-gray-50/70 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-medium ${
+                  errors.description
+                    ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                    : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
+                }`}
               />
               {errors.description && (
                 <span className="text-xs font-bold text-rose-500">
@@ -332,7 +371,11 @@ const Add_Rent_A_Car = () => {
                   value={formData.area}
                   onChange={handleInputChange}
                   placeholder="উদাঃ নথুল্লাবাদ"
-                  className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium"
+                  className={`w-full bg-gray-50/70 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-medium ${
+                    errors.area
+                      ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                      : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
+                  }`}
                 />
                 {errors.area && (
                   <span className="text-xs font-bold text-rose-500">
@@ -341,22 +384,40 @@ const Add_Rent_A_Car = () => {
                 )}
               </div>
 
+              {/* থাানা/উপজেলা ড্রপডাউন মেনু */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                  <FiMapPin size={13} className="text-gray-400" /> উপজেলা{" "}
+                  <FiMapPin size={13} className="text-gray-400" /> উপজেলা/থানা{" "}
                   <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="upazila"
-                  value={formData.upazila}
-                  onChange={handleInputChange}
-                  placeholder="উদাঃ বরিশাল সদর"
-                  className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium"
-                />
-                {errors.upazila && (
+                <div className="relative">
+                  <select
+                    name="thana" // ব্যাকএন্ড কি 'thana' তে সেট
+                    value={formData.thana}
+                    onChange={handleInputChange}
+                    className={`w-full bg-gray-50/70 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-medium appearance-none cursor-pointer ${
+                      errors.thana
+                        ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                        : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
+                    }`}
+                  >
+                    <option value="" disabled hidden>
+                      সিলেক্ট করুন
+                    </option>
+                    {BARISAL_THANAS.map((thana) => (
+                      <option key={thana.key} value={thana.key}>
+                        {thana.label}
+                      </option>
+                    ))}
+                  </select>
+                  <FiChevronDown
+                    size={16}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                </div>
+                {errors.thana && (
                   <span className="text-xs font-bold text-rose-500">
-                    {errors.upazila}
+                    {errors.thana}
                   </span>
                 )}
               </div>
@@ -372,7 +433,11 @@ const Add_Rent_A_Car = () => {
                   value={formData.serviceArea}
                   onChange={handleInputChange}
                   placeholder="উদাঃ বরিশাল বিভাগ"
-                  className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium"
+                  className={`w-full bg-gray-50/70 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-medium ${
+                    errors.serviceArea
+                      ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                      : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
+                  }`}
                 />
                 {errors.serviceArea && (
                   <span className="text-xs font-bold text-rose-500">
@@ -402,7 +467,7 @@ const Add_Rent_A_Car = () => {
                   <button
                     type="button"
                     onClick={addPhoneField}
-                    className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-all cursor-pointer"
+                    className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-all cursor-pointer shadow-sm"
                   >
                     + আরও নম্বর যোগ করুন
                   </button>
@@ -421,13 +486,12 @@ const Add_Rent_A_Car = () => {
                             onChange={(e) =>
                               handlePhoneChange(index, e.target.value)
                             }
-                            className={`w-full bg-gray-50 text-gray-900 text-sm pl-4 pr-16 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-mono font-semibold ${
+                            className={`w-full bg-gray-50/70 text-gray-900 text-sm pl-4 pr-16 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-mono font-semibold ${
                               phoneError
                                 ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10"
                                 : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
                             }`}
                           />
-                          {/* 11/11 কাউন্টার ব্যাজ */}
                           <span
                             className={`absolute right-3 px-1.5 py-0.5 text-[10px] font-black rounded-md font-mono ${
                               phone.length === 11
@@ -472,7 +536,7 @@ const Add_Rent_A_Car = () => {
                       value={formData.whatsapp}
                       onChange={(e) => handleWhatsappChange(e.target.value)}
                       placeholder="উদাঃ 017XXXXXXXX"
-                      className={`w-full bg-gray-50 text-gray-900 text-sm pl-4 pr-16 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-mono font-semibold ${
+                      className={`w-full bg-gray-50/70 text-gray-900 text-sm pl-4 pr-16 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-mono font-semibold ${
                         errors.whatsapp
                           ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10"
                           : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
@@ -505,7 +569,7 @@ const Add_Rent_A_Car = () => {
           {/* সেকশন ৪: গাড়ির ধরন */}
           <div>
             <label className="text-xs font-bold text-gray-700 flex items-center gap-1 mb-3">
-              <FiLayers size={13} className="text-gray-400" /> গাড়ির ধরন বা
+              <FiLayers size={13} className="text-gray-400" /> গাড়ির ধরন বা
               ক্যাটাগরি <span className="text-rose-500">*</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -560,7 +624,11 @@ const Add_Rent_A_Car = () => {
                   value={formData.rentPerDay}
                   onChange={handleInputChange}
                   placeholder="উদাঃ 3500"
-                  className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-mono font-semibold"
+                  className={`w-full bg-gray-50/70 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-mono font-semibold ${
+                    errors.rentPerDay
+                      ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                      : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
+                  }`}
                 />
                 {errors.rentPerDay && (
                   <span className="text-xs font-bold text-rose-500">
@@ -581,7 +649,11 @@ const Add_Rent_A_Car = () => {
                   value={formData.rentPerTrip}
                   onChange={handleInputChange}
                   placeholder="উদাঃ 1500"
-                  className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-mono font-semibold"
+                  className={`w-full bg-gray-50/70 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-mono font-semibold ${
+                    errors.rentPerTrip
+                      ? "border-rose-300 focus:border-rose-500 focus:ring-rose-500/10"
+                      : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
+                  }`}
                 />
                 {errors.rentPerTrip && (
                   <span className="text-xs font-bold text-rose-500">
@@ -595,7 +667,7 @@ const Add_Rent_A_Car = () => {
           {/* সাবমিট প্যানেল */}
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
             <Link
-              to="/dashboard/cars"
+              to="/dashboard/all-cars"
               className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all no-underline cursor-pointer"
             >
               Cancel
