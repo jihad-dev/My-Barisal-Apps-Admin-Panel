@@ -4,9 +4,15 @@ import { Link } from "react-router-dom";
 import { FiPlus, FiEye, FiTrendingUp, FiActivity } from "react-icons/fi";
 import {
   useGetAllAmbulanceQuery,
+  useGetAllBanksQuery,
+  useGetAllCarsQuery,
   useGetAllDoctorsQuery,
+  useGetAllDonorsQuery,
   useGetAllHospitalsQuery,
+  useGetAllImamMuzzainQuery,
+  useGetAllInstitutionsQuery,
   useGetAllLawyersQuery,
+  useGetAllPoliceQuery,
   useGetAllUsersQuery,
 } from "../../Redux/features/admin/adminApi";
 import Loader from "../../utils/Loader";
@@ -141,14 +147,30 @@ const AdminHome = () => {
     useGetAllAmbulanceQuery(undefined);
   const { data: doctors, isLoading: isDoctorsLoading } =
     useGetAllDoctorsQuery(undefined);
-
-  // Show the loader if any of the major API requests are still loading
+  const { data: imamMuzzain, isLoading: isImamLoading } =
+    useGetAllImamMuzzainQuery(undefined);
+  const { data: bloodDonors, isLoading: isBloodLoading } =
+    useGetAllDonorsQuery(undefined);
+  const { data: banks, isLoading: isBanksLoading } =
+    useGetAllBanksQuery(undefined);
+  const { data: institutes, isLoading: isInstitutesLoading } =
+    useGetAllInstitutionsQuery(undefined);
+  const { data: policeStations, isLoading: isPoliceLoading } =
+    useGetAllPoliceQuery(undefined);
+  const { data: vehicles, isLoading: isVehiclesLoading } =
+    useGetAllCarsQuery(undefined);
   if (
     isHospitalsLoading ||
     isLawyersLoading ||
     isUsersLoading ||
     isAmbulancesLoading ||
-    isDoctorsLoading
+    isDoctorsLoading ||
+    isImamLoading ||
+    isBloodLoading ||
+    isBanksLoading ||
+    isInstitutesLoading ||
+    isPoliceLoading ||
+    isVehiclesLoading
   ) {
     return <Loader />;
   }
@@ -159,6 +181,15 @@ const AdminHome = () => {
   const total_ambulances =
     (ambulances as { data: unknown[] })?.data?.length || 0;
   const total_doctors = (doctors as { data: unknown[] })?.data?.length || 0;
+  const total_imam = (imamMuzzain as { data: unknown[] })?.data?.length || 0;
+
+  const total_blood = (bloodDonors as { data: unknown[] })?.data?.length || 0;
+  const total_bank = (banks as { data: unknown[] })?.data?.length || 0;
+  const total_institute =
+    (institutes as { data: unknown[] })?.data?.length || 0;
+  const total_police =
+    (policeStations as { data: unknown[] })?.data?.length || 0;
+  const total_car = (vehicles).length || 0;
 
   const stats = [
     {
@@ -171,16 +202,76 @@ const AdminHome = () => {
       text: "text-blue-600",
       trend: "text-blue-500",
     },
-   {
-  label: "মোট নিবন্ধিত ডাক্তার",
-  value: total_doctors,
-  change: "+2 এই মাসে",
-  icon: "🏥",
-  bg: "bg-rose-50",
-  iconBg: "bg-rose-100",
-  text: "text-rose-600",
-  trend: "text-rose-500",
-},
+    {
+      label: "মোট নিবন্ধিত ডাক্তার",
+      value: total_doctors,
+      change: "+2 এই মাসে",
+      icon: "🩺",
+      bg: "bg-rose-50",
+      iconBg: "bg-rose-100",
+      text: "text-rose-600",
+      trend: "text-rose-500",
+    },
+    {
+      label: "ইমাম ও মুয়াজ্জিন",
+      value: total_imam, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      change: "+4 এই মাসে",
+      icon: "🕌",
+      bg: "bg-emerald-50",
+      iconBg: "bg-emerald-100",
+      text: "text-emerald-600",
+      trend: "text-emerald-500",
+    },
+    {
+      label: "রক্তের ডোনার",
+      value: total_blood, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      change: "+12 এই মাসে",
+      icon: "🩸",
+      bg: "bg-red-50",
+      iconBg: "bg-red-100",
+      text: "text-red-600",
+      trend: "text-red-500",
+    },
+    {
+      label: "ব্যাংক ও আর্থিক সেবা",
+      value: total_bank, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      change: "+1 এই মাসে",
+      icon: "🏦",
+      bg: "bg-indigo-50",
+      iconBg: "bg-indigo-100",
+      text: "text-indigo-600",
+      trend: "text-indigo-500",
+    },
+    {
+      label: "শিক্ষা প্রতিষ্ঠান",
+      value: total_institute, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      change: "+3 এই মাসে",
+      icon: "🏫",
+      bg: "bg-violet-50",
+      iconBg: "bg-violet-100",
+      text: "text-violet-600",
+      trend: "text-violet-500",
+    },
+    {
+      label: "থানা ও পুলিশ প্রশাসন",
+      value: total_police, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      change: "+0 এই মাসে",
+      icon: "👮",
+      bg: "bg-sky-50",
+      iconBg: "bg-sky-100",
+      text: "text-sky-600",
+      trend: "text-sky-500",
+    },
+    {
+      label: "গাড়ি ও পরিবহন",
+      value: total_car,
+      change: "+5 এই মাসে",
+      icon: "🚘",
+      bg: "bg-orange-50",
+      iconBg: "bg-orange-100",
+      text: "text-orange-600",
+      trend: "text-orange-500",
+    },
     {
       label: "মোট আইনজীবী",
       value: total_lawyers,
@@ -220,17 +311,7 @@ const AdminHome = () => {
       iconBg: "bg-green-100",
       text: "text-green-600",
       trend: "text-green-500",
-    },
-    {
-      label: "সংবাদ",
-      value: "56",
-      change: "+7 এই মাসে",
-      icon: "📰",
-      bg: "bg-cyan-50",
-      iconBg: "bg-cyan-100",
-      text: "text-cyan-600",
-      trend: "text-cyan-500",
-    },
+    }
   ];
 
   return (
