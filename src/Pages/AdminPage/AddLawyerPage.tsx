@@ -1,4 +1,6 @@
-import{ useState, ChangeEvent, FormEvent } from "react";
+
+
+import { useState, ChangeEvent, FormEvent } from "react";
 import {
   Plus,
   Trash2,
@@ -15,24 +17,54 @@ import {
 } from "lucide-react";
 import { useCreateLawyerMutation } from "../../Redux/features/admin/adminApi";
 
+// আপনার আপডেট করা নিখুঁত টাইপ ডেফিনিশন
+export type TLawyerType =
+  | "civil"
+  | "criminal"
+  | "family"
+  | "corporate"
+  | "general";
+export type TCourtType =
+  | "supreme"
+  | "high"
+  | "district"
+  | "magistrate"
+  | "labor"
+  | "other";
+
+export interface ILawyer {
+  name: string;
+  designation: string;
+  lawyerType: TLawyerType;
+  courtType: TCourtType;
+  barCouncilId?: string;
+  area: string;
+  address: string;
+  phone: string[];
+  experience: number;
+  isDeleted: boolean;
+}
+
 export default function AddLawyerPage() {
   // RTK Query Mutation Hook
   const [createLawyer, { isLoading, error: apiError, isSuccess }] =
     useCreateLawyerMutation();
 
-  // আপনার ব্যাকএন্ড অবজেক্ট ফরম্যাট অনুযায়ী নতুন স্টেট স্ট্রাকচার
+  // মূল ফর্ম স্টেট (নতুন অপশন টাইপ কাস্টিং সহ)
   const [formData, setFormData] = useState({
     name: "",
-    designation: "এডভোকেট", // ডিফল্ট ভ্যালু সেট করা হয়েছে
-    lawyerType: "criminal", // আপনার ডাটা ফরম্যাট অনুযায়ী
-    courtType: "district", // আপনার ডাটা ফরম্যাট অনুযায়ী
+    designation: "এডভোকেট",
+    lawyerType: "civil" as TLawyerType, // নতুন ডিফল্ট ভ্যালু
+    courtType: "district" as TCourtType,
     barCouncilId: "",
     experience: "",
-    address: "", // chamberAddress পরিবর্তন করে address করা হয়েছে
+    address: "",
     area: "",
   });
 
+  // ফোন নম্বর ও ইন-লাইন লাল এরর স্টেট
   const [phoneNumbers, setPhoneNumbers] = useState<string[]>([""]);
+  const [phoneErrors, setPhoneErrors] = useState<Record<number, string>>({});
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // ইনপুট চেঞ্জ হ্যান্ডলার
@@ -43,84 +75,117 @@ export default function AddLawyerPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ফোন নম্বর চেঞ্জ হ্যান্ডলার (ড্যাশ বা স্পেশাল ক্যারেক্টার ছাড়া শুধু ডিজিট এন্ট্রি লক)
+  // ফোন নম্বর চেঞ্জ ও রিয়েল-টাইম এরর রিমুভাল
   const handlePhoneChange = (index: number, value: string): void => {
-    const cleanValue = value.replace(/[^0-9]/g, ""); // শুধুমাত্র ০-৯ এলাউড
+    const cleanValue = value.replace(/[^0-9]/g, ""); // শুধু ০-৯ এর সংখ্যা নিবে
 
     if (cleanValue.length <= 11) {
       const updatedPhones = [...phoneNumbers];
       updatedPhones[index] = cleanValue;
       setPhoneNumbers(updatedPhones);
+
+      // ইউজার সঠিক ১১ ডিজিট টাইপ করলে বা একদম খালি করলে লাল এরর চলে যাবে
+      if (cleanValue.length === 11 || cleanValue.length === 0) {
+        setPhoneErrors((prev) => {
+          const errors = { ...prev };
+          delete errors[index];
+          return errors;
+        });
+      }
     }
   };
 
-  const addPhoneField = (): void => setPhoneNumbers([...phoneNumbers, ""]);
+  const addPhoneField = (): void => {
+    setPhoneNumbers([...phoneNumbers, ""]);
+  };
 
   const removePhoneField = (index: number): void => {
     if (phoneNumbers.length > 1) {
       setPhoneNumbers(phoneNumbers.filter((_, i) => i !== index));
+      setPhoneErrors((prev) => {
+        const errors = { ...prev };
+        delete errors[index];
+        // ইনডেক্স ডিলিট হওয়ার পর এরর অবজেক্ট রি-অ্যালাইন করা
+        const newErrors: Record<number, string> = {};
+        Object.keys(errors).forEach((key) => {
+          const k = Number(key);
+          if (k > index) newErrors[k - 1] = errors[k];
+          else if (k < index) newErrors[k] = errors[k];
+        });
+        return newErrors;
+      });
     }
   };
 
-  // এরর মেসেজ হ্যান্ডলিং ফাংশন
-const getErrorMessage = (): string => {
-  if (validationError) return validationError;
+  // এপিআই এরর মেসেজ হ্যান্ডলিং
+  const getErrorMessage = (): string => {
+    if (validationError) return validationError;
 
-  if (apiError) {
-    // এখানে {} বা any এর পরিবর্তে Record<string, unknown> দিয়ে টাইপ কাস্ট করা হয়েছে
-    const errorObj = apiError as Record<string, unknown>;
+    if (apiError) {
+      const errorObj = apiError as Record<string, unknown>;
 
-    if ("status" in errorObj) {
-      if (errorObj.status === 403) return "আপনার এই আইনজীবী প্রোফাইলটি যুক্ত করার অ্যাডমিন পারমিশন নেই।";
-      if (errorObj.status === 401) return "টোকেন পাওয়া যায়নি! দয়া করে আবার লগইন করুন।";
+      if ("status" in errorObj) {
+        if (errorObj.status === 403)
+          return "আপনার এই আইনজীবী প্রোফাইলটি যুক্ত করার অ্যাডমিন পারমিশন নেই।";
+        if (errorObj.status === 401)
+          return "টোকেন পাওয়া যায়নি! দয়া করে আবার লগইন করুন।";
 
-      const data = errorObj.data as { message?: string } | undefined;
-      if (data?.message) return data.message;
-    } else if ("message" in errorObj) {
-      return String(errorObj.message) || "ডাটা সংরক্ষণ করা সম্ভব হয়নি।";
+        const data = errorObj.data as { message?: string } | undefined;
+        if (data?.message) return data.message;
+      } else if ("message" in errorObj) {
+        return String(errorObj.message) || "ডাটা সংরক্ষণ করা সম্ভব হয়নি।";
+      }
+      return "ডাটা সংরক্ষণ করা সম্ভব হয়নি।";
     }
-    return "ডাটা সংরক্ষণ করা সম্ভব হয়নি।";
-  }
 
-  return "";
-};
+    return "";
+  };
   const errorMessage = getErrorMessage();
 
   // ফর্ম সাবমিট হ্যান্ডলার
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setValidationError(null);
+    const errors: Record<number, string> = {};
 
-    // ফোন নম্বর ফিল্টারিং ও ভ্যালিডেশন
-    const filteredPhones = phoneNumbers.filter((phone) => phone.trim() !== "");
+    // নিখুঁত ফোন নম্বর ভ্যালিডেশন চেকিং
+    phoneNumbers.forEach((phone, index) => {
+      const trimmedPhone = phone.trim();
+      if (trimmedPhone.length === 0) {
+        errors[index] = "মোবাইল নম্বরটি খালি রাখা যাবে না।";
+      } else if (trimmedPhone.length !== 11) {
+        errors[index] = "মোবাইল নম্বরটি অবশ্যই ঠিক ১১ ডিজিটের হতে হবে।";
+      }
+    });
 
-    if (filteredPhones.length === 0) {
-      setValidationError("কমপক্ষে একটি বৈধ ফোন নম্বর দেওয়া বাধ্যতামূলক।");
+    // কোনো ইনপুটে সমস্যা থাকলে সাবমিট ব্লক করে এরর শো করবে
+    if (Object.keys(errors).length > 0) {
+      setPhoneErrors(errors);
+      setValidationError("দয়া করে ফর্মের ভুল মোবাইল নম্বরগুলো ঠিক করুন।");
       return;
     }
 
-    const hasInvalidPhone = filteredPhones.some((phone) => phone.length !== 11);
-    if (hasInvalidPhone) {
-      setValidationError("প্রতিটি মোবাইল নম্বর অবশ্যই ঠিক ১১ ডিজিটের হতে হবে।");
-      return;
-    }
-
-    // আপনার ব্যাকএন্ড স্কিমা অনুযায়ী ফাইনাল পে-লোড
-    const payload = {
-      ...formData,
-      experience: Number(formData.experience), // সংখ্যায় রূপান্তর (যেমন: 15)
-      phone: filteredPhones,
+    const payload: ILawyer = {
+      name: formData.name,
+      designation: formData.designation,
+      lawyerType: formData.lawyerType,
+      courtType: formData.courtType,
+      barCouncilId: formData.barCouncilId || undefined,
+      area: formData.area,
+      address: formData.address,
+      phone: phoneNumbers,
+      experience: Number(formData.experience),
       isDeleted: false,
     };
 
     try {
       await createLawyer(payload).unwrap();
 
-      // সফল হলে ফর্ম রিসেট
+      // সফল হলে সমস্ত স্টেট রিস্টোর ও রিসেট করা
       setFormData({
         name: "",
         designation: "এডভোকেট",
-        lawyerType: "criminal",
+        lawyerType: "civil",
         courtType: "district",
         barCouncilId: "",
         experience: "",
@@ -128,6 +193,7 @@ const getErrorMessage = (): string => {
         area: "",
       });
       setPhoneNumbers([""]);
+      setPhoneErrors({});
     } catch (err) {
       console.error("Lawyer Creation Failed:", err);
     }
@@ -146,7 +212,7 @@ const getErrorMessage = (): string => {
               অ্যাডমিন প্যানেল
             </span>
             <h2 className="text-xl md:text-2xl font-black mt-3 tracking-tight">
-              جديد | নতুন আইনজীবী যুক্ত করুন
+              নতুন আইনজীবী যুক্ত করুন
             </h2>
             <p className="text-slate-400 text-xs mt-1">
               সঠিক ডাটাবেজ স্ট্রাকচার অনুযায়ী আইনজীবীর প্রোফাইল তৈরি করুন।
@@ -156,7 +222,7 @@ const getErrorMessage = (): string => {
 
         {/* ─── FORM START ─── */}
         <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
-          {/* এরর মেসেজ ডিসপ্লে */}
+          {/* গ্লোবাল এরর মেসেজ ডিসপ্লে */}
           {errorMessage && (
             <div className="flex items-center gap-3 bg-rose-50 border-l-4 border-rose-500 p-4 rounded-xl text-rose-800 text-xs font-medium animate-fadeIn">
               <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-500" />
@@ -175,7 +241,7 @@ const getErrorMessage = (): string => {
             </div>
           )}
 
-          {/* ১. আইনজীবীর নাম ও পদবী (Grid Layout) */}
+          {/* ১. আইনজীবীর নাম ও পদবী */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
@@ -203,6 +269,7 @@ const getErrorMessage = (): string => {
                 <Briefcase className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
+                  disabled
                   name="designation"
                   required
                   placeholder="উদা: এডভোকেট"
@@ -214,19 +281,18 @@ const getErrorMessage = (): string => {
             </div>
           </div>
 
-          {/* ২. বার কাউন্সিল আইডি এবং অভিজ্ঞতা (Grid Layout) */}
+          {/* ২. বার কাউন্সিল আইডি এবং অভিজ্ঞতা */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
                 বার কাউন্সিল আইডি (barCouncilId){" "}
-                <span className="text-rose-500">*</span>
+                <span className="text-slate-400">(ঐচ্ছিক)</span>
               </label>
               <div className="relative">
                 <Award className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   name="barCouncilId"
-                  required
                   placeholder="উদা: BD-2345"
                   value={formData.barCouncilId}
                   onChange={handleInputChange}
@@ -256,7 +322,7 @@ const getErrorMessage = (): string => {
             </div>
           </div>
 
-          {/* ৩. আইনজীবী টাইপ এবং কোর্ট টাইপ (Premium Dropdowns) */}
+          {/* ৩. আইনজীবী টাইপ এবং কোর্ট টাইপ (আপডেটেড ড্রপডাউন অপশনসমূহ) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
@@ -270,10 +336,11 @@ const getErrorMessage = (): string => {
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50/50 text-sm text-slate-800 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
                 >
-                  <option value="criminal">Criminal (ফৌজদারি)</option>
                   <option value="civil">Civil (দেওয়ানি)</option>
-                  <option value="corporate">Corporate (করপোরেট)</option>
+                  <option value="criminal">Criminal (ফৌজদারি)</option>
                   <option value="family">Family (পারিবারিক)</option>
+                  <option value="corporate">Corporate (করপোরেট)</option>
+                  <option value="general">General (সাধারণ অনুশীলন)</option>
                 </select>
               </div>
             </div>
@@ -291,15 +358,21 @@ const getErrorMessage = (): string => {
                   className="w-full pl-10 pr-4 py-3 bg-slate-50/50 text-sm text-slate-800 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
                 >
                   <option value="district">District Court (জেলা আদালত)</option>
-                  <option value="supreme">
-                    Supreme Court (হাইকোর্ট/সুপ্রিম কোর্ট)
+                  <option value="magistrate">
+                    Magistrate Court (ম্যাজিস্ট্রেট কোর্ট)
                   </option>
+                  <option value="high">High Court (হাইকোর্ট)</option>
+                  <option value="supreme">
+                    Supreme Court (আপিল বিভাগ/সুপ্রিম কোর্ট)
+                  </option>
+                  <option value="labor">Labor Court (শ্রম আদালত)</option>
+                  <option value="other">Other (অন্যান্য ট্রাইব্যুনাল)</option>
                 </select>
               </div>
             </div>
           </div>
 
-          {/* ৪. এরিয়া এবং চেম্বার ঠিকানা (address) */}
+          {/* ৪. এরিয়া এবং চেম্বার ঠিকানা */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
@@ -329,7 +402,7 @@ const getErrorMessage = (): string => {
                   type="text"
                   name="address"
                   required
-                  placeholder="উদা: আদালত পাড়া, বরিশাল"
+                  placeholder="উদা: আদালত পাড়া, বরিশাল"
                   value={formData.address}
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50/50 text-sm text-slate-800 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
@@ -338,11 +411,12 @@ const getErrorMessage = (): string => {
             </div>
           </div>
 
-          {/* ৫. ডাইনামিক ফোন নম্বর ইনপুট অ্যারে */}
+          {/* ৫. ডাইনামিক ফোন নম্বর ইনপুট অ্যারে (ইন-লাইন রেড এরর UI সহ) */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
-                মোবাইল নম্বর সমূহ (phone)
+                মোবাইল নম্বর সমূহ (phone){" "}
+                <span className="text-rose-500">*</span>
               </label>
               <button
                 type="button"
@@ -354,42 +428,62 @@ const getErrorMessage = (): string => {
             </div>
 
             <div className="space-y-3">
-              {phoneNumbers.map((phone, index) => (
-                <div key={index} className="flex gap-2 items-center">
-                  <div className="relative w-full">
-                    <Phone className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      required={index === 0}
-                      value={phone}
-                      onChange={(e) => handlePhoneChange(index, e.target.value)}
-                      placeholder={`ফোন নম্বর ${index + 1} (উদা: 01820254226)`}
-                      className="w-full pl-10 pr-14 py-3 bg-slate-50/50 text-sm text-slate-800 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
-                    />
-                    {phone.length > 0 && (
-                      <span
-                        className={`absolute right-3 top-3 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                          phone.length === 11
-                            ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                            : "bg-slate-100 text-slate-400"
-                        }`}
-                      >
-                        {phone.length}/11
+              {phoneNumbers.map((phone, index) => {
+                const hasError = !!phoneErrors[index];
+                return (
+                  <div key={index} className="flex flex-col gap-1.5">
+                    <div className="flex gap-2 items-center">
+                      <div className="relative w-full">
+                        <Phone
+                          className={`absolute left-3.5 top-3.5 w-4 h-4 ${hasError ? "text-rose-400" : "text-slate-400"}`}
+                        />
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={phone}
+                          onChange={(e) =>
+                            handlePhoneChange(index, e.target.value)
+                          }
+                          placeholder={`ফোন নম্বর ${index + 1} (উদা: 01820254226)`}
+                          className={`w-full pl-10 pr-14 py-3 bg-slate-50/50 text-sm text-slate-800 rounded-xl border transition-all font-mono focus:outline-none focus:ring-2
+                            ${
+                              hasError
+                                ? "border-rose-500 focus:ring-rose-500/20 focus:border-rose-500 bg-rose-50/10"
+                                : "border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            }`}
+                        />
+                        {phone.length > 0 && (
+                          <span
+                            className={`absolute right-3 top-3 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                              phone.length === 11
+                                ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                                : "bg-slate-100 text-slate-400"
+                            }`}
+                          >
+                            {phone.length}/11
+                          </span>
+                        )}
+                      </div>
+                      {phoneNumbers.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removePhoneField(index)}
+                          className="p-3 text-rose-500 bg-rose-50/50 hover:bg-rose-50 rounded-xl transition-all border border-rose-100/50 hover:border-rose-200 flex-shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    {/* ইন-লাইন লাল এরর মেসেজ */}
+                    {hasError && (
+                      <span className="text-[11px] text-rose-600 font-medium flex items-center gap-1 pl-1 animate-fadeIn">
+                        <AlertCircle className="w-3 h-3 text-rose-500" />{" "}
+                        {phoneErrors[index]}
                       </span>
                     )}
                   </div>
-                  {phoneNumbers.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removePhoneField(index)}
-                      className="p-3 text-rose-500 bg-rose-50/50 hover:bg-rose-50 rounded-xl transition-all border border-rose-100/50 hover:border-rose-200 flex-shrink-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

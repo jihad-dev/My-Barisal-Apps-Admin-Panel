@@ -52,7 +52,7 @@ const adminApi = baseApi.injectEndpoints({
             url: '/lawyers',
             method: 'GET',
          }),
-         providesTags: [{ type: 'lawyers', id: 'LIST' }],
+         providesTags: ['lawyers'],
       }),
       createLawyer: builder.mutation<ApiResponse, any>({
          query: (newLawyer: any) => ({
