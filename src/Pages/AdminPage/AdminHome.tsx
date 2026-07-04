@@ -73,31 +73,31 @@ const quickActions = [
   {
     label: "পুলিশ স্টেশন পরিচালনা",
     icon: "🚓",
-    to: "/dashboard/police",
+    to: "/dashboard/all-police",
     color: "bg-indigo-50 hover:bg-indigo-100 text-indigo-700",
   },
   {
     label: "ফায়ার সার্ভিস",
     icon: "🚒",
-    to: "/dashboard/fire-service",
+    to: "/dashboard/all-fire-station",
     color: "bg-orange-50 hover:bg-orange-100 text-orange-700",
   },
   {
     label: "ইমাম ও খতিব",
     icon: "🕌",
-    to: "/dashboard/imams",
+    to: "/dashboard/all-imam-muazzin",
     color: "bg-teal-50 hover:bg-teal-100 text-teal-700",
   },
   {
     label: "গাড়ি/রেন্ট-এ-কার",
     icon: "🚗",
-    to: "/dashboard/cars",
+    to: "/dashboard/all-cars",
     color: "bg-slate-50 hover:bg-slate-100 text-slate-700",
   },
   {
     label: "রক্তের গ্রুপ/দাতা",
     icon: "🩸",
-    to: "/dashboard/blood-donors",
+    to: "/dashboard/all-donors",
     color: "bg-rose-50 hover:bg-rose-100 text-rose-700",
   },
 ];

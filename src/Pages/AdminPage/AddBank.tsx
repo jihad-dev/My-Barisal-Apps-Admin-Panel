@@ -1,18 +1,27 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  FiBriefcase,
-  FiTrash2,
-  FiArrowLeft,
- 
-} from "react-icons/fi";
+import { FiBriefcase, FiTrash2, FiArrowLeft } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { useAddBankMutation } from "../../Redux/features/admin/adminApi";
 import { toast } from "sonner";
 
+const THANAS = [
+  { name: "বরিশাল সদর (Barisal Sadar)", value: "Barisal Sadar" },
+  { name: "বাকেরগঞ্জ (Bakerganj)", value: "Bakerganj" },
+  { name: "উজিরপুর (Wazirpur)", value: "Wazirpur" },
+  { name: "বাবুগঞ্জ (Babuganj)", value: "Babuganj" },
+  { name: "বানারীপাড়া (Banaripara)", value: "Banaripara" },
+  { name: "গৌরনদী (Gournadi)", value: "Gournadi" },
+  { name: "আগৈলঝারা (Agailjhara)", value: "Agailjhara" },
+  { name: "মেহেন্দিগঞ্জ (Mehendiganj)", value: "Mehendiganj" },
+  { name: "মুলাদী (Muladi)", value: "Muladi" },
+  { name: "হিজলা (Hizla)", value: "Hizla" },
+];
+
 interface BankFormData {
   name: string;
+  thana: string;
   branch: string;
   routingNumber: string;
   address: string;
@@ -24,6 +33,7 @@ const AddBank = () => {
 
   const [formData, setFormData] = useState<BankFormData>({
     name: "",
+    thana: "",
     branch: "",
     routingNumber: "",
     address: "",
@@ -33,11 +43,12 @@ const AddBank = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
 
-    // 🔢 রাউটিং নম্বর শুধুমাত্র সংখ্যা এবং সর্বোচ্চ ৯ ডিজিট লক
     if (name === "routingNumber") {
       const cleanRouting = value.replace(/[^0-9]/g, "").slice(0, 9);
       setFormData((prev) => ({ ...prev, [name]: cleanRouting }));
@@ -54,23 +65,22 @@ const AddBank = () => {
           return err;
         });
       }
-      return;
-    }
+    } else {
+      // 🛠️ ফিক্স: এখানে এলস (else) ব্লকের ভেতর অবজেক্ট স্টেট আপডেট করা হয়েছে যেন থানা ইনপুট মিস না হয়
+      setFormData((prev) => ({ ...prev, [name]: value }));
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
+      if (errors[name]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
     }
   };
 
-  // 🇧🇩 রিয়েল-টাইম বাংলাদেশি মোবাইল নম্বর ভ্যালিডেশন
   const handlePhoneChange = (index: number, value: string) => {
-    const cleanValue = value.replace(/[^0-9]/g, ""); // শুধু সংখ্যা
+    const cleanValue = value.replace(/[^0-9]/g, "");
     const updatedPhones = [...phones];
     updatedPhones[index] = cleanValue;
     setPhones(updatedPhones);
@@ -80,7 +90,7 @@ const AddBank = () => {
     if (cleanValue.length > 0 && !cleanValue.startsWith("01")) {
       setErrors((prev) => ({
         ...prev,
-        [errorKey]: "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (০১ দিয়ে শুরু করুন)",
+        [errorKey]: "সঠিক বাংলাদেশি মোবাইল নম্বর দিন (০১ দিয়ে শুরু করুন)",
       }));
     } else if (cleanValue.length > 0 && cleanValue.length !== 11) {
       setErrors((prev) => ({
@@ -97,31 +107,41 @@ const AddBank = () => {
   };
 
   const addPhoneField = () => setPhones([...phones, ""]);
+
   const removePhoneField = (index: number) => {
     const updatedPhones = phones.filter((_, i) => i !== index);
     setPhones(updatedPhones);
+
     setErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[`phone_${index}`];
+      const newErrors: Record<string, string> = {};
+      Object.keys(prev).forEach((key) => {
+        if (!key.startsWith("phone_")) {
+          newErrors[key] = prev[key];
+        }
+      });
+      updatedPhones.forEach((_, idx) => {
+        const oldErrorKey = `phone_${idx >= index ? idx + 1 : idx}`;
+        if (prev[oldErrorKey]) {
+          newErrors[`phone_${idx}`] = prev[oldErrorKey];
+        }
+      });
       return newErrors;
     });
   };
 
-  // 🛠️ সাবমিট করার আগের ফাইনাল ভ্যালিডেশন (ব্যাকএন্ড Zod মেসেজের সাথে মিল রেখে)
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) newErrors.name = "ব্যাংকের নাম আবশ্যিক!";
+    if (!formData.thana) newErrors.thana = "একটি থানা নির্বাচন করুন!";
     if (!formData.branch.trim()) newErrors.branch = "ব্রাঞ্চের নাম দিন!";
 
-    // ৯ ডিজিট রাউটিং নম্বর বাধ্যতামুলক চেক
     if (formData.routingNumber.length !== 9) {
       newErrors.routingNumber = "রাউটিং নম্বর অবশ্যই ৯ ডিজিটের হতে হবে";
     }
 
     if (!formData.address.trim()) newErrors.address = "ঠিকানা দিন!";
 
-    // বাংলাদেশি নম্বর ফরম্যাট চেক (১১ ডিজিট এবং ০১ দিয়ে শুরু)
     phones.forEach((phone, index) => {
       const cleanPhone = phone.trim();
       if (!cleanPhone) {
@@ -141,27 +161,28 @@ const AddBank = () => {
       return toast.error("অনুগ্রহ করে ফর্মের ভুলগুলো ঠিক করুন!");
     }
 
+    // 🛠️ ডাটাবেজে সাবমিট করার মূল অবজেক্ট
     const finalData = {
       name: formData.name,
+      thana: formData.thana, // 👈 নিশ্চিত করা হলো যে ডাটা রিকোয়েস্টে থানা যাচ্ছে
       branch: formData.branch,
       routingNumber: formData.routingNumber,
       address: formData.address,
       phone: phones,
     };
 
-    let toastId = "";
+    let toastId;
     try {
       toastId = toast.loading("নতুন ব্যাংক যুক্ত করা হচ্ছে...");
       await addBank(finalData).unwrap();
 
-      toast.success("নতুন ব্যাংক সফলভাবে যুক্ত হয়েছে!", { id: toastId });
-      navigate("/dashboard/banks");
+      toast.success("নতুন ব্যাংক সফলভাবে যুক্ত হয়েছে!", { id: toastId });
+      navigate("/dashboard/all-banks");
     } catch (error: any) {
-      // ব্যাকএন্ডের Zod অ্যারে এরর হ্যান্ডলিং
       const backendMessage =
         error?.data?.issues?.[0]?.message ||
         error?.data?.message ||
-        "ব্যাংকটি যোগ করতে ব্যর্থ হয়েছে!";
+        "ব্যাংকটি যোগ করতে ব্যর্থ হয়েছে!";
       toast.error(backendMessage, { id: toastId });
     }
   };
@@ -179,10 +200,6 @@ const AddBank = () => {
               <h1 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">
                 নতুন ব্যাংক যুক্ত করুন
               </h1>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">
-                ৯ ডিজিট রাউটিং ও ভ্যালিড বাংলাদেশি মোবাইল নম্বর সহ ডেটা এন্ট্রি
-                দিন।
-              </p>
             </div>
           </div>
           <Link
@@ -201,23 +218,55 @@ const AddBank = () => {
           className="bg-white rounded-2xl border border-gray-100/90 shadow-sm overflow-hidden p-6 sm:p-8 space-y-6"
         >
           <div className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-700">
-                ব্যাংকের নাম <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="উদাঃ Dutch-Bangla Bank PLC"
-                className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium"
-              />
-              {errors.name && (
-                <span className="text-xs font-bold text-rose-500">
-                  {errors.name}
-                </span>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-xs font-bold text-gray-700">
+                  ব্যাংকের নাম <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="উদাঃ Dutch-Bangla Bank PLC"
+                  className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-medium"
+                />
+                {errors.name && (
+                  <span className="text-xs font-bold text-rose-500">
+                    {errors.name}
+                  </span>
+                )}
+              </div>
+
+              {/* থানা ড্রপডাউন */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700">
+                  থানা নির্বাচন করুন <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    name="thana"
+                    value={formData.thana}
+                    onChange={handleInputChange}
+                    className="w-full bg-gray-50 text-gray-900 text-sm pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-semibold cursor-pointer appearance-none"
+                  >
+                    <option value="">থানা সিলেক্ট করুন</option>
+                    {THANAS.map((thana) => (
+                      <option key={thana.value} value={thana.value}>
+                        {thana.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400 text-[10px]">
+                    ▼
+                  </span>
+                </div>
+                {errors.thana && (
+                  <span className="text-xs font-bold text-rose-500">
+                    {errors.thana}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -250,16 +299,12 @@ const AddBank = () => {
                   name="routingNumber"
                   value={formData.routingNumber}
                   onChange={handleInputChange}
-                  placeholder="৯ ডিজিটের নম্বর (উদাঃ 015896358)"
+                  placeholder="৯ ডিজিটের নম্বর"
                   className="w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all font-mono font-semibold"
                 />
-                {errors.routingNumber ? (
+                {errors.routingNumber && (
                   <span className="text-xs font-bold text-rose-500">
                     {errors.routingNumber}
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-gray-400 block font-medium">
-                    ডিজিট কাউন্ট: {formData.routingNumber.length}/9
                   </span>
                 )}
               </div>
@@ -287,12 +332,11 @@ const AddBank = () => {
 
           <hr className="border-gray-100" />
 
-          {/* 📞 কন্টাক্ট নম্বরসমূহ */}
+          {/* মোবাইল নম্বর */}
           <div className="space-y-3">
             <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
               <span>
-                মোবাইল নম্বরসমূহ (বাংলাদেশি ফরম্যাট){" "}
-                <span className="text-rose-500">*</span>
+                মোবাইল নম্বরসমূহ <span className="text-rose-500">*</span>
               </span>
               <button
                 type="button"
@@ -306,43 +350,26 @@ const AddBank = () => {
             <div className="grid grid-cols-1 gap-3">
               {phones.map((phone, index) => {
                 const phoneError = errors[`phone_${index}`];
-                const isValidBD = phone.length === 11 && phone.startsWith("01");
-
                 return (
                   <div key={index} className="flex flex-col gap-1">
                     <div className="flex items-center gap-2 relative">
-                      <div className="relative w-full flex items-center">
-                        <input
-                          type="text"
-                          value={phone}
-                          maxLength={11}
-                          placeholder="উদাঃ 017XXXXXXXX"
-                          onChange={(e) =>
-                            handlePhoneChange(index, e.target.value)
-                          }
-                          className={`w-full bg-gray-50 text-gray-900 text-sm pl-4 pr-16 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-mono font-semibold ${
-                            phoneError
-                              ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/10"
-                              : "border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
-                          }`}
-                        />
-                        {phone.length > 0 && (
-                          <span
-                            className={`absolute right-3 px-1.5 py-0.5 text-[9px] font-black rounded-md font-sans select-none ${
-                              isValidBD
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                : "bg-rose-50 text-rose-500 border border-rose-100"
-                            }`}
-                          >
-                            {phone.length}/11
-                          </span>
-                        )}
-                      </div>
+                      <input
+                        type="text"
+                        value={phone}
+                        maxLength={11}
+                        placeholder="উদাঃ 017XXXXXXXX"
+                        onChange={(e) =>
+                          handlePhoneChange(index, e.target.value)
+                        }
+                        className={`w-full bg-gray-50 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-mono font-semibold ${
+                          phoneError ? "border-rose-400" : "border-gray-200"
+                        }`}
+                      />
                       {phones.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removePhoneField(index)}
-                          className="p-2.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer flex-shrink-0"
+                          className="p-2.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
                         >
                           <FiTrash2 size={15} />
                         </button>
@@ -370,7 +397,7 @@ const AddBank = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer border border-white/10"
+              className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold text-sm rounded-xl shadow-md transition-all disabled:opacity-50 cursor-pointer"
             >
               {isLoading ? "সংরক্ষণ করা হচ্ছে..." : "নতুন ব্যাংক সেভ করুন"}
             </button>
