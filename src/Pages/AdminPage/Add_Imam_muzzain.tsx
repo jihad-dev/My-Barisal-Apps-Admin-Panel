@@ -84,7 +84,7 @@ const Add_Imam_muzzain = () => {
     const tempErrors: Partial<Record<keyof IImamMuazzinForm, string>> = {};
 
     if (!formData.name.trim()) {
-      tempErrors.name = "ইмам/মুয়াজ্জিনের নাম আবশ্যক";
+      tempErrors.name = "ইমাম/মুয়াজ্জিনের নাম আবশ্যক";
     } else if (formData.name.trim().length < 3) {
       tempErrors.name = "নাম অন্তত ৩ অক্ষরের হতে হবে";
     }
@@ -238,7 +238,7 @@ const Add_Imam_muzzain = () => {
                     className={`w-full px-4 py-2.5 bg-white border ${errors.role ? "border-red-400 focus:ring-red-500/5" : "border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/5"} focus:ring-4 rounded-xl outline-none transition-all font-bold text-sm text-slate-700 cursor-pointer`}
                   >
                     <option value="">নির্বাচন করুন</option>
-                    <option value="imam">ইмам (Imam)</option>
+                    <option value="imam">ইমাম (Imam)</option>
                     <option value="muazzin">মুয়াজ্জিন (Muazzin)</option>
                     <option value="both">উভয়ই (Both)</option>{" "}
                     {/* ব্যাকএন্ডের 'both' এখানে অ্যাড করা হলো */}
@@ -253,7 +253,7 @@ const Add_Imam_muzzain = () => {
                 {/* ফোন */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700">
-                    মো바일 নম্বর *
+                   মোবাইল নম্বর *
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-slate-400">

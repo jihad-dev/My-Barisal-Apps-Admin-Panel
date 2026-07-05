@@ -20,7 +20,6 @@ import {
   useGetAllImamMuzzainQuery,
 } from "../../Redux/features/admin/adminApi";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
 import Swal from "sweetalert2";
 
 // ১. বরিশালের ফিক্সড থানা অ্যারে
@@ -28,7 +27,7 @@ const THANAS = [
   { name: "বরিশাল সদর (Barisal Sadar)", value: "Barisal Sadar" },
   { name: "বাকেরগঞ্জ (Bakerganj)", value: "Bakerganj" },
   { name: "উজিরপুর (Wazirpur)", value: "Wazirpur" },
-  { name: "بابوগঞ্জ (Babuganj)", value: "Babuganj" },
+  { name: "বাবুগঞ্জ (Babuganj)", value: "Babuganj" },
   { name: "বানারীপাড়া (Banaripara)", value: "Banaripara" },
   { name: "গৌরনদী (Gournadi)", value: "Gournadi" },
   { name: "আগৈলঝারা (Agailjhara)", value: "Agailjhara" },

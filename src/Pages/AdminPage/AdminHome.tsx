@@ -1,7 +1,13 @@
+
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-
-import { FiPlus, FiEye, FiTrendingUp, FiActivity } from "react-icons/fi";
+import {
+  FiPlus,
+  FiEye,
+  FiTrendingUp,
+  FiAlertCircle,
+  FiRefreshCw,
+} from "react-icons/fi";
 import {
   useGetAllAmbulanceQuery,
   useGetAllBanksQuery,
@@ -15,18 +21,20 @@ import {
   useGetAllPoliceQuery,
   useGetAllUsersQuery,
 } from "../../Redux/features/admin/adminApi";
-import Loader from "../../utils/Loader";
 import { useAppSelector } from "../../Redux/hooks";
 
-const container = {
+// Framer Motion Variants
+const containerVariants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
-};
-const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
+
+// Static Configurations
 const quickActions = [
   {
     label: "হাসপাতাল যোগ করুন",
@@ -77,19 +85,19 @@ const quickActions = [
     color: "bg-indigo-50 hover:bg-indigo-100 text-indigo-700",
   },
   {
-    label: "ফায়ার সার্ভিস",
+    label: "ফায়ার সার্ভিস",
     icon: "🚒",
     to: "/dashboard/all-fire-station",
     color: "bg-orange-50 hover:bg-orange-100 text-orange-700",
   },
   {
-    label: "ইমাম ও খতিব",
+    label: "ইмам ও খতিব",
     icon: "🕌",
     to: "/dashboard/all-imam-muazzin",
     color: "bg-teal-50 hover:bg-teal-100 text-teal-700",
   },
   {
-    label: "গাড়ি/রেন্ট-এ-কার",
+    label: "গাড়ি/রেন্ট-এ-কার",
     icon: "🚗",
     to: "/dashboard/all-cars",
     color: "bg-slate-50 hover:bg-slate-100 text-slate-700",
@@ -135,31 +143,81 @@ const recentActivities = [
   },
 ];
 
+// Reusable Skeleton Components for a seamless layout shift
+const StatsSkeleton = () => (
+  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 animate-pulse">
+    {[...Array(12)].map((_, i) => (
+      <div
+        key={i}
+        className="bg-gray-200/70 rounded-2xl p-4 h-[124px] flex flex-col justify-between"
+      />
+    ))}
+  </div>
+);
+
 const AdminHome = () => {
   const user = useAppSelector((state) => state.auth.user);
-  const { data: hospital, isLoading: isHospitalsLoading } =
-    useGetAllHospitalsQuery(undefined);
-  const { data: lawyers, isLoading: isLawyersLoading } =
-    useGetAllLawyersQuery(undefined);
-  const { data: users, isLoading: isUsersLoading } =
-    useGetAllUsersQuery(undefined);
-  const { data: ambulances, isLoading: isAmbulancesLoading } =
-    useGetAllAmbulanceQuery(undefined);
-  const { data: doctors, isLoading: isDoctorsLoading } =
-    useGetAllDoctorsQuery(undefined);
-  const { data: imamMuzzain, isLoading: isImamLoading } =
-    useGetAllImamMuzzainQuery(undefined);
-  const { data: bloodDonors, isLoading: isBloodLoading } =
-    useGetAllDonorsQuery(undefined);
-  const { data: banks, isLoading: isBanksLoading } =
-    useGetAllBanksQuery(undefined);
-  const { data: institutes, isLoading: isInstitutesLoading } =
-    useGetAllInstitutionsQuery(undefined);
-  const { data: policeStations, isLoading: isPoliceLoading } =
-    useGetAllPoliceQuery(undefined);
-  const { data: vehicles, isLoading: isVehiclesLoading } =
-    useGetAllCarsQuery(undefined);
-  if (
+
+  // API Queries Execution
+  const {
+    data: hospital,
+    isLoading: isHospitalsLoading,
+    isError: isHospitalsError,
+    refetch: refetchHospitals,
+  } = useGetAllHospitalsQuery(undefined);
+  const {
+    data: lawyers,
+    isLoading: isLawyersLoading,
+    isError: isLawyersError,
+  } = useGetAllLawyersQuery(undefined);
+  const {
+    data: users,
+    isLoading: isUsersLoading,
+    isError: isUsersError,
+  } = useGetAllUsersQuery(undefined);
+  const {
+    data: ambulances,
+    isLoading: isAmbulancesLoading,
+    isError: isAmbulancesError,
+  } = useGetAllAmbulanceQuery(undefined);
+  const {
+    data: doctors,
+    isLoading: isDoctorsLoading,
+    isError: isDoctorsError,
+  } = useGetAllDoctorsQuery(undefined);
+  const {
+    data: imamMuzzain,
+    isLoading: isImamLoading,
+    isError: isImamError,
+  } = useGetAllImamMuzzainQuery(undefined);
+  const {
+    data: bloodDonors,
+    isLoading: isBloodLoading,
+    isError: isBloodError,
+  } = useGetAllDonorsQuery(undefined);
+  const {
+    data: banks,
+    isLoading: isBanksLoading,
+    isError: isBanksError,
+  } = useGetAllBanksQuery(undefined);
+  const {
+    data: institutes,
+    isLoading: isInstitutesLoading,
+    isError: isInstitutesError,
+  } = useGetAllInstitutionsQuery(undefined);
+  const {
+    data: policeStations,
+    isLoading: isPoliceLoading,
+    isError: isPoliceError,
+  } = useGetAllPoliceQuery(undefined);
+  const {
+    data: vehicles,
+    isLoading: isVehiclesLoading,
+    isError: isVehiclesError,
+  } = useGetAllCarsQuery(undefined);
+
+  // Global Check States
+  const anyLoading =
     isHospitalsLoading ||
     isLawyersLoading ||
     isUsersLoading ||
@@ -170,26 +228,39 @@ const AdminHome = () => {
     isBanksLoading ||
     isInstitutesLoading ||
     isPoliceLoading ||
-    isVehiclesLoading
-  ) {
-    return <Loader />;
-  }
+    isVehiclesLoading;
+  const anyError =
+    isHospitalsError ||
+    isLawyersError ||
+    isUsersError ||
+    isAmbulancesError ||
+    isDoctorsError ||
+    isImamError ||
+    isBloodError ||
+    isBanksError ||
+    isInstitutesError ||
+    isPoliceError ||
+    isVehiclesError;
 
-  const total_hospital = (hospital as { data: unknown[] })?.data?.length || 0;
-  const total_lawyers = (lawyers as { data: unknown[] })?.data?.length || 0;
-  const total_users = (users as { data: unknown[] })?.data?.length || 0;
-  const total_ambulances =
-    (ambulances as { data: unknown[] })?.data?.length || 0;
-  const total_doctors = (doctors as { data: unknown[] })?.data?.length || 0;
-  const total_imam = (imamMuzzain as { data: unknown[] })?.data?.length || 0;
+  // Safe Data Transformations (Prevents crashing if `.data` or array structure varies)
+  const extractLength = (res: any) =>
+    Array.isArray(res?.data)
+      ? res.data.length
+      : Array.isArray(res)
+        ? res.length
+        : 0;
 
-  const total_blood = (bloodDonors as { data: unknown[] })?.data?.length || 0;
-  const total_bank = (banks as { data: unknown[] })?.data?.length || 0;
-  const total_institute =
-    (institutes as { data: unknown[] })?.data?.length || 0;
-  const total_police =
-    (policeStations as { data: unknown[] })?.data?.length || 0;
-  const total_car = (vehicles).length || 0;
+  const total_hospital = extractLength(hospital);
+  const total_lawyers = extractLength(lawyers);
+  const total_users = extractLength(users);
+  const total_ambulances = extractLength(ambulances);
+  const total_doctors = extractLength(doctors);
+  const total_imam = extractLength(imamMuzzain);
+  const total_blood = extractLength(bloodDonors);
+  const total_bank = extractLength(banks);
+  const total_institute = extractLength(institutes);
+  const total_police = extractLength(policeStations);
+  const total_car = extractLength(vehicles);
 
   const stats = [
     {
@@ -214,7 +285,7 @@ const AdminHome = () => {
     },
     {
       label: "ইমাম ও মুয়াজ্জিন",
-      value: total_imam, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      value: total_imam,
       change: "+4 এই মাসে",
       icon: "🕌",
       bg: "bg-emerald-50",
@@ -224,7 +295,7 @@ const AdminHome = () => {
     },
     {
       label: "রক্তের ডোনার",
-      value: total_blood, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      value: total_blood,
       change: "+12 এই মাসে",
       icon: "🩸",
       bg: "bg-red-50",
@@ -234,7 +305,7 @@ const AdminHome = () => {
     },
     {
       label: "ব্যাংক ও আর্থিক সেবা",
-      value: total_bank, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      value: total_bank,
       change: "+1 এই মাসে",
       icon: "🏦",
       bg: "bg-indigo-50",
@@ -244,7 +315,7 @@ const AdminHome = () => {
     },
     {
       label: "শিক্ষা প্রতিষ্ঠান",
-      value: total_institute, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      value: total_institute,
       change: "+3 এই মাসে",
       icon: "🏫",
       bg: "bg-violet-50",
@@ -254,7 +325,7 @@ const AdminHome = () => {
     },
     {
       label: "থানা ও পুলিশ প্রশাসন",
-      value: total_police, // TODO: আপনার কুয়েরির কাউন্ট ভেরিয়েবলটি এখানে বসাবেন
+      value: total_police,
       change: "+0 এই মাসে",
       icon: "👮",
       bg: "bg-sky-50",
@@ -263,7 +334,7 @@ const AdminHome = () => {
       trend: "text-sky-500",
     },
     {
-      label: "গাড়ি ও পরিবহন",
+      label: "গাড়ি ও পরিবহন",
       value: total_car,
       change: "+5 এই মাসে",
       icon: "🚘",
@@ -311,155 +382,133 @@ const AdminHome = () => {
       iconBg: "bg-green-100",
       text: "text-green-600",
       trend: "text-green-500",
-    }
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <motion.div
         className="max-w-7xl mx-auto space-y-6"
-        variants={container}
+        variants={containerVariants}
         initial="hidden"
         animate="show"
       >
-        {/* Welcome Banner */}
+        {/* 🚨 Network/API Global Error Banner */}
+        {anyError && (
+          <motion.div
+            variants={itemVariants}
+            className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+          >
+            <div className="flex items-center gap-2.5">
+              <FiAlertCircle className="text-red-500 flex-shrink-0" size={20} />
+              <p className="text-sm font-medium">
+                কিছু মডিউলের ডেটা লোড করার সময় নেটওয়ার্ক বা সার্ভার সমস্যা
+                হয়েছে। প্রদর্শিত ডেটা অসম্পূর্ণ হতে পারে।
+              </p>
+            </div>
+            <button
+              onClick={() => refetchHospitals()}
+              className="flex items-center gap-1.5 self-start sm:self-auto bg-white border border-red-200 hover:bg-red-100 text-red-700 font-semibold text-xs px-3 py-1.5 rounded-xl transition"
+            >
+              <FiRefreshCw size={12} /> পুনরায় চেষ্টা করুন
+            </button>
+          </motion.div>
+        )}
 
+        {/* Welcome Banner */}
         <motion.div
-          variants={item}
+          variants={itemVariants}
           className="relative overflow-hidden rounded-3xl bg-slate-900 p-6 sm:p-8 border border-white/10 shadow-2xl shadow-blue-950/20"
         >
-          {/* 🌟 ব্যাকগ্রাউন্ড ডেকোরেশন (Neon Premium Blobs) */}
           <div className="absolute top-[-20%] right-[-10%] w-72 h-72 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-full blur-[80px] opacity-40 animate-pulse" />
           <div className="absolute bottom-[-30%] right-[20%] w-56 h-56 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-full blur-[60px] opacity-30" />
           <div className="absolute top-[20%] left-[-5%] w-32 h-32 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full blur-[50px] opacity-20" />
-
-          {/* গ্রিড লাইন ওভারলে (প্রিমিয়াম টেকি ফিল আনার জন্য) */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:24px_24px]" />
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
-              {/* লাইভ রোল ব্যাজ */}
               <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-xs font-semibold tracking-wider text-cyan-300 uppercase">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
                 {user?.role || "Super Admin"} Panel
               </div>
-
               <div>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight mt-1">
                   Welcome to{" "}
                   <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent drop-shadow-sm">
                     My Barisal Apps
                   </span>{" "}
-                  Admin Panel💀
+                  Admin Panel
                 </h1>
                 <p className="text-slate-300 text-sm sm:text-base font-medium max-w-xl mt-1">
                   <span className="text-white font-bold">My Barisal</span>{" "}
-                  অ্যাপ্লিকেশনের সকল জরুরি সেবা ও ডাটাবেজ মডিউলসমূহ রিয়েল-টাইমে
-                  পরিচালনা করুন।
+                  অ্যাপ্লিকেশনের সকল জরুরি সেবা ও ডাটাবেজ মডিউলসমূহ পরিচালনা
+                  করুন।
                 </p>
               </div>
-
-              {/* ইউজার ইমেইল কুইক ট্যাগ */}
               {user?.email && (
-                <div className="text-xs font-mono bg-black/20 inline-block px-2.5 py-1 rounded-md border border-white/5 text-red-600">
+                <div className="text-xs font-mono bg-black/20 inline-block px-2.5 py-1 rounded-md border border-white/5 text-red-400">
                   Logged in as: {user.email}
                 </div>
               )}
             </div>
 
-            {/* প্রিমিয়াম অ্যাকশন বাটনসমূহ */}
             <div className="flex flex-wrap sm:flex-nowrap gap-3 flex-shrink-0">
               <Link
                 to="/dashboard/hospitals/add"
                 className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-3 rounded-2xl text-sm font-bold hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 no-underline border border-blue-400/20 w-full sm:w-auto"
               >
-                <FiPlus size={18} className="stroke-[3]" />
-                নতুন ডেটা যোগ করুন
-              </Link>
-
-              <Link
-                to={""}
-                className="flex items-center justify-center gap-2 bg-white/5 text-white border border-white/10 backdrop-blur-md px-5 py-3 rounded-2xl text-sm font-bold hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 no-underline w-full sm:w-auto"
-              >
-                <FiEye size={18} className="text-cyan-400" />
-                লাইভ অ্যাপ দেখুন
-              </Link>
-            </div>
-          </div>
-        </motion.div>
-        {/* <motion.div
-          variants={item}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 sm:p-8"
-        >
-          
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
-          <div className="absolute bottom-0 right-24 w-40 h-40 bg-white/5 rounded-full translate-y-20" />
-
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <p className="text-blue-200 text-sm font-medium mb-1">
-                স্বাগতম 👋
-              </p>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                My Barisal Admin Panel
-              </h1>
-              <p className="text-blue-200 text-sm mt-1.5">
-                বরিশালের সকল সেবা পরিচালনা করুন এক জায়গা থেকে
-              </p>
-            </div>
-            <div className="flex gap-3 flex-shrink-0">
-              <Link
-                to="/dashboard/hospitals/add"
-                className="flex items-center gap-2 bg-white text-blue-700 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-50 transition-colors no-underline"
-              >
-                <FiPlus size={16} />
-                নতুন যোগ করুন
+                <FiPlus size={18} className="stroke-[3]" /> নতুন ডেটা যোগ করুন
               </Link>
               <Link
                 to="/"
-                target="_blank"
-                className="flex items-center gap-2 bg-white/10 text-white border border-white/20 px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-white/20 transition-colors no-underline"
+                className="flex items-center justify-center gap-2 bg-white/5 text-white border border-white/10 backdrop-blur-md px-5 py-3 rounded-2xl text-sm font-bold hover:bg-white/10 hover:border-white/20 transition-all active:scale-95 no-underline w-full sm:w-auto"
               >
-                <FiEye size={16} />
-                অ্যাপ দেখুন
+                <FiEye size={18} className="text-cyan-400" /> লাইভ অ্যাপ দেখুন
               </Link>
             </div>
           </div>
-
-        </motion.div> */}
-        {/* Stats Grid */}
-        <motion.div
-          variants={container}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4"
-        >
-          {stats.map((stat) => (
-            <motion.div
-              key={stat.label}
-              variants={item}
-              whileHover={{ y: -3, transition: { duration: 0.2 } }}
-              className={`${stat.bg} rounded-2xl p-4 cursor-pointer`}
-            >
-              <div
-                className={`w-10 h-10 ${stat.iconBg} rounded-xl flex items-center justify-center text-xl mb-3`}
-              >
-                {stat.icon}
-              </div>
-              <p className={`text-2xl font-bold ${stat.text}`}>{stat.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5 font-medium">
-                {stat.label}
-              </p>
-              <p className={`text-[11px] mt-1 font-medium ${stat.trend}`}>
-                <FiTrendingUp className="inline mr-0.5" size={10} />
-                {stat.change}
-              </p>
-            </motion.div>
-          ))}
         </motion.div>
-        {/* Quick Actions + Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Quick Actions */}
+
+        {/* Stats Section with Localized Skeleton Fallback */}
+        {anyLoading ? (
+          <StatsSkeleton />
+        ) : (
           <motion.div
-            variants={item}
+            variants={containerVariants}
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4"
+          >
+            {stats.map((stat) => (
+              <motion.div
+                key={stat.label}
+                variants={itemVariants}
+                whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                className={`${stat.bg} rounded-2xl p-4 cursor-pointer`}
+              >
+                <div
+                  className={`w-10 h-10 ${stat.iconBg} rounded-xl flex items-center justify-center text-xl mb-3`}
+                >
+                  {stat.icon}
+                </div>
+                <p className={`text-2xl font-bold ${stat.text}`}>
+                  {stat.value}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5 font-medium">
+                  {stat.label}
+                </p>
+                <p className={`text-[11px] mt-1 font-medium ${stat.trend}`}>
+                  <FiTrendingUp className="inline mr-0.5" size={10} />{" "}
+                  {stat.change}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Quick Actions + Recent Activity Layout Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Quick Actions Panel */}
+          <motion.div
+            variants={itemVariants}
             className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm"
           >
             <div className="flex items-center justify-between mb-5">
@@ -474,8 +523,8 @@ const AdminHome = () => {
               {quickActions.map((action) => (
                 <motion.div
                   key={action.label}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <Link
                     to={action.to}
@@ -491,9 +540,9 @@ const AdminHome = () => {
             </div>
           </motion.div>
 
-          {/* Recent Activity */}
+          {/* Recent Activity Panel */}
           <motion.div
-            variants={item}
+            variants={itemVariants}
             className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm"
           >
             <div className="flex items-center justify-between mb-5">
@@ -501,7 +550,10 @@ const AdminHome = () => {
                 সাম্প্রতিক কার্যক্রম
               </h2>
               <div className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-2.5 py-1 rounded-lg font-medium">
-                <FiActivity size={11} />
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
                 লাইভ
               </div>
             </div>
@@ -531,68 +583,72 @@ const AdminHome = () => {
             </div>
           </motion.div>
         </div>
-        {/* Module Overview */}
+
+        {/* Dynamic Module Overview (Linked up with live endpoint counts dynamically) */}
         <motion.div
-          variants={item}
+          variants={itemVariants}
           className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm"
         >
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-base font-bold text-gray-900">মডিউল ওভারভিউ</h2>
-            <span className="text-xs text-gray-400">সর্বশেষ আপডেট: আজ</span>
+            <span className="text-xs text-gray-400">লাইভ ট্র্যাকিং</span>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[
               {
                 label: "হাসপাতাল",
-                value: 12,
-                max: 20,
+                value: total_hospital,
+                max: Math.max(total_hospital + 5, 20),
                 color: "bg-blue-500",
                 icon: "🏥",
               },
               {
                 label: "আইনজীবী",
-                value: 45,
-                max: 60,
+                value: total_lawyers,
+                max: Math.max(total_lawyers + 15, 60),
                 color: "bg-amber-500",
                 icon: "⚖️",
               },
               {
                 label: "অ্যাম্বুলেন্স",
-                value: 8,
-                max: 15,
+                value: total_ambulances,
+                max: Math.max(total_ambulances + 5, 15),
                 color: "bg-red-500",
                 icon: "🚑",
               },
               {
-                label: "গুণীজন",
-                value: 89,
-                max: 100,
-                color: "bg-purple-500",
-                icon: "🌟",
+                label: "নিবন্ধিত ডাক্তার",
+                value: total_doctors,
+                max: Math.max(total_doctors + 20, 100),
+                color: "bg-rose-500",
+                icon: "🩺",
               },
-            ].map((mod) => (
-              <div key={mod.label} className="flex items-center gap-4">
-                <span className="text-lg w-7 flex-shrink-0">{mod.icon}</span>
-                <div className="flex-1">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-[13px] font-medium text-gray-700">
-                      {mod.label}
-                    </span>
-                    <span className="text-[12px] text-gray-400">
-                      {mod.value}/{mod.max}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div
-                      className={`h-full rounded-full ${mod.color}`}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(mod.value / mod.max) * 100}%` }}
-                      transition={{ duration: 0.8, delay: 0.3 }}
-                    />
+            ].map((mod) => {
+              const percentages = ((mod.value / mod.max) * 100).toFixed(0);
+              return (
+                <div key={mod.label} className="flex items-center gap-4">
+                  <span className="text-lg w-7 flex-shrink-0">{mod.icon}</span>
+                  <div className="flex-1">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-[13px] font-medium text-gray-700">
+                        {mod.label}
+                      </span>
+                      <span className="text-[12px] text-gray-400 font-mono">
+                        {mod.value} / {mod.max}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <motion.div
+                        className={`h-full rounded-full ${mod.color}`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentages}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </motion.div>
       </motion.div>

@@ -121,6 +121,15 @@ const adminApi = baseApi.injectEndpoints({
          query: () => '/fire-service', // আপনার ব্যাকএন্ডের সঠিক রাউট
          providesTags: ['fire-service']
       }),
+      // ২. ডিলিট ফায়ার স্টেশন মিউটেশন
+      deleteFireStation: builder.mutation<any, string>({
+         query: (id) => ({
+            url: `/fire-service/${id}`,
+            method: 'DELETE',
+         }),
+         // ডিলিট সফল হলে এই ট্যাগটি ইনভ্যালিড হবে এবং অটোমেটিক নতুন ডেটা ফেচ হবে
+         invalidatesTags: ['fire-service']
+      }),
       getAllInstitutions: builder.query<any, void>({
          query: () => '/institutions', // আপনার ব্যাকএন্ডের সঠিক রাউট
          providesTags: ['institute']
@@ -280,5 +289,6 @@ export const {
    useAddImamMuzzainMutation,
    useGetAllInstitutionsQuery,
    useAddInstituteMutation,
-   useDeleteImamMuzzainMutation
+   useDeleteImamMuzzainMutation,
+   useDeleteFireStationMutation
 } = adminApi;
