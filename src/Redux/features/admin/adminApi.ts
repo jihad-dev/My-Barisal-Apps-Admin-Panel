@@ -1,5 +1,3 @@
-
-
 import { baseApi } from "../../api/baseApi";
 
 interface ApiResponse<T = any> {
@@ -156,10 +154,13 @@ const adminApi = baseApi.injectEndpoints({
       }),
 
       // ==========================================
-      // ৬. Donar Endpoints (Spelled as provided)
+      // ৬. Donar Endpoints (Updated)
       // ==========================================
       getAllDonors: builder.query<any, void>({
-         query: () => '/donars',
+         query: () => ({
+            url: '/donars',
+            method: 'GET',
+         }),
          providesTags: ['donars']
       }),
 
@@ -173,10 +174,13 @@ const adminApi = baseApi.injectEndpoints({
       }),
 
       // ==========================================
-      // ৭. Pharmacy Endpoints
+      // ৭. Pharmacy Endpoints (Updated)
       // ==========================================
       getAllPharmacies: builder.query<any, void>({
-         query: () => '/pharmacies',
+         query: () => ({
+            url: '/pharmacies',
+            method: 'GET',
+         }),
          providesTags: ['pharmacies']
       }),
 
@@ -190,10 +194,13 @@ const adminApi = baseApi.injectEndpoints({
       }),
 
       // ==========================================
-      // ৮. Bank Endpoints
+      // ৮. Bank Endpoints (Updated)
       // ==========================================
       getAllBanks: builder.query<any, void>({
-         query: () => '/bank',
+         query: () => ({
+            url: '/bank',
+            method: 'GET',
+         }),
          providesTags: ['banks']
       }),
 
@@ -207,10 +214,13 @@ const adminApi = baseApi.injectEndpoints({
       }),
 
       // ==========================================
-      // ৯. Police Endpoints
+      // ৯. Police Endpoints (Updated)
       // ==========================================
       getAllPolice: builder.query<any, void>({
-         query: () => '/police',
+         query: () => ({
+            url: '/police',
+            method: 'GET',
+         }),
          providesTags: ['police']
       }),
 
@@ -232,10 +242,13 @@ const adminApi = baseApi.injectEndpoints({
       }),
 
       // ==========================================
-      // ১০. Fire Service Endpoints
+      // ১০. Fire Service Endpoints (Updated)
       // ==========================================
       getAllFireStation: builder.query<any, void>({
-         query: () => '/fire-service',
+         query: () => ({
+            url: '/fire-service',
+            method: 'GET',
+         }),
          providesTags: ['fire-service']
       }),
 
@@ -260,7 +273,10 @@ const adminApi = baseApi.injectEndpoints({
       // ১১. Institution Endpoints
       // ==========================================
       getAllInstitutions: builder.query<any, void>({
-         query: () => '/institutions',
+         query: () => ({
+            url: '/institutions',
+            method: 'GET',
+         }),
          providesTags: ['institute']
       }),
 
@@ -277,7 +293,10 @@ const adminApi = baseApi.injectEndpoints({
       // ১২. Imam & Muazzin Endpoints
       // ==========================================
       getAllImamMuzzain: builder.query<any, void>({
-         query: () => '/imam-muazzin',
+         query: () => ({
+            url: '/imam-muazzin',
+            method: 'GET',
+         }),
          providesTags: ['imam-muazzin']
       }),
 
