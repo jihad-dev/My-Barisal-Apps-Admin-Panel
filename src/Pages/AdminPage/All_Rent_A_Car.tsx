@@ -15,8 +15,10 @@ import {
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import {
-  useGetAllCarsQuery,
+  
   useDeleteCarMutation,
+  useGetAllCarsQuery,
+
 } from "../../Redux/features/admin/adminApi";
 import Swal from "sweetalert2";
 

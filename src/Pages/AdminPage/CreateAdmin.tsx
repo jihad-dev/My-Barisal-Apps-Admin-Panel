@@ -4,7 +4,6 @@ import { useCreateAdminMutation } from "../../Redux/features/admin/adminApi";
 import Loader from "../../utils/Loader";
 import { toast } from "sonner";
 import { FaEyeSlash } from "react-icons/fa";
-
 const CreateAdmin = () => {
     const [createAdmin, { isLoading }] = useCreateAdminMutation();
     const [showPassword, setShowPassword] = useState(false);

@@ -11,7 +11,7 @@ import {
   FiLoader,
 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
-import { useAddPoliceStationMutation } from "../../Redux/features/admin/adminApi";
+import { useGetAllPoliceQuery } from "../../Redux/features/admin/adminApi";
 import { toast } from "sonner";
 
 // ফ্রেমার মোশন অ্যানিমেশন ভ্যারিয়েন্ট
@@ -25,7 +25,7 @@ const bdPhoneRegex = /^(01[3-9]\d{8})$/;
 
 const AddPoliceStation = () => {
   const navigate = useNavigate();
-  const [addPoliceStation, { isLoading }] = useAddPoliceStationMutation();
+  const [addPoliceStation, { isLoading }] = useGetAllPoliceQuery();
 
   // ১. ফর্ম মেইন স্টেট (React Hook Form ছাড়া ম্যানুয়াল স্টেট)
   const [formData, setFormData] = useState({
