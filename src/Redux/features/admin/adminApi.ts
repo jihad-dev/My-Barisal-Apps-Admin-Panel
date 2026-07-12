@@ -92,6 +92,13 @@ const adminApi = baseApi.injectEndpoints({
          }),
          invalidatesTags: ['hospitals'],
       }),
+      deleteHospital: builder.mutation<{ success: boolean; message: string; data: any }, string>({
+         query: (id) => ({
+            url: `/hospitals/${id}`,
+            method: 'DELETE',
+         }),
+         invalidatesTags: ['hospitals'],
+      }),
 
       // ==========================================
       // ৩. Doctor Endpoints
@@ -383,5 +390,6 @@ export const {
    useDeleteImamMuzzainMutation,
    useGetAllCarsQuery,
    useAddCarMutation,
-   useDeleteCarMutation
+   useDeleteCarMutation,
+   useDeleteHospitalMutation
 } = adminApi;

@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGetAllHospitalsQuery } from "../../Redux/features/admin/adminApi";
-import Loader from "../../utils/Loader";
+import {
+  useDeleteHospitalMutation,
+  useGetAllHospitalsQuery,
+} from "../../Redux/features/admin/adminApi";
 import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
 
 interface Hospital {
   _id: string;
   name: string;
   address: string;
-  thana?: string; // নতুন ব্যাকএন্ড ফিল্ডের সাথে মিল রেখে যুক্ত করা হলো
+  thana?: string;
   area: string;
   phone: string[];
-  type: "government" | "private" | "clinic" | "diagnostic"; // diagnostic যুক্ত করা হলো
+  type: "government" | "private" | "clinic" | "diagnostic";
   isDeleted: boolean;
   createdAt?: string;
 }
@@ -20,68 +23,78 @@ const typeMap = {
   government: {
     label: "সরকারি",
     color: "text-cyan-600",
-    bg: "bg-cyan-50",
-    border: "border-cyan-200",
-    badge: "bg-cyan-100 text-cyan-700 border-cyan-200",
-    bar: "from-cyan-400 to-blue-500",
-    icon: "bg-cyan-50 text-cyan-600",
+    bg: "bg-cyan-50/80 backdrop-blur-sm",
+    border: "border-cyan-100",
+    badge:
+      "bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-700 border-cyan-200/60 shadow-sm",
+    bar: "from-cyan-400 via-blue-400 to-blue-500",
+    icon: "bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-100",
     dot: "bg-cyan-400",
   },
   private: {
     label: "বেসরকারি",
     color: "text-amber-600",
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-    badge: "bg-amber-100 text-amber-700 border-amber-200",
-    bar: "from-amber-400 to-orange-500",
-    icon: "bg-amber-50 text-amber-600",
+    bg: "bg-amber-50/80 backdrop-blur-sm",
+    border: "border-amber-100",
+    badge:
+      "bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 border-amber-200/60 shadow-sm",
+    bar: "from-amber-400 via-orange-400 to-orange-500",
+    icon: "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-100",
     dot: "bg-amber-400",
   },
   clinic: {
     label: "ক্লিনিক",
     color: "text-violet-600",
-    bg: "bg-violet-50",
-    border: "border-violet-200",
-    badge: "bg-violet-100 text-violet-700 border-violet-200",
-    bar: "from-violet-400 to-purple-500",
-    icon: "bg-violet-50 text-violet-600",
+    bg: "bg-violet-50/80 backdrop-blur-sm",
+    border: "border-violet-100",
+    badge:
+      "bg-gradient-to-r from-violet-50 to-purple-50 text-violet-700 border-violet-200/60 shadow-sm",
+    bar: "from-violet-400 via-purple-400 to-purple-500",
+    icon: "bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-violet-100",
     dot: "bg-violet-400",
   },
   diagnostic: {
     label: "ডায়াগনস্টিক",
     color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
-    badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    bar: "from-emerald-400 to-teal-500",
-    icon: "bg-emerald-50 text-emerald-600",
+    bg: "bg-emerald-50/80 backdrop-blur-sm",
+    border: "border-emerald-100",
+    badge:
+      "bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 border-emerald-200/60 shadow-sm",
+    bar: "from-emerald-400 via-teal-400 to-teal-500",
+    icon: "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-100",
     dot: "bg-emerald-400",
   },
 } as const;
 
+type HospitalTypeKey = keyof typeof typeMap;
+
 const FILTERS = [
-  { key: "all", label: "সব" },
+  { key: "all", label: "সব হাসপাতাল" },
   { key: "government", label: "সরকারি" },
   { key: "private", label: "বেসরকারি" },
   { key: "clinic", label: "ক্লিনিক" },
   { key: "diagnostic", label: "ডায়াগনস্টিক" },
 ];
 
-const THANAS = [
+const thanaNameMap: Record<string, string> = {
+  "barisal sadar": "বরিশাল সদর",
+  bakerganj: "বাকেরগঞ্জ",
+  wazirpur: "উজিরপুর",
+  babuganj: "বাবুগঞ্জ",
+  banaripara: "বানারীপাড়া",
+  gournadi: "গৌরনদী",
+  agailjhara: "আগৈলঝারা",
+  mehendiganj: "মেহেন্দিগঞ্জ",
+  muladi: "মুলাদী",
+  hizla: "হিজলা",
+};
+
+const STATIC_THANAS = [
   { key: "all", label: "সকল থানা" },
-  { key: "barisal sadar", label: "বরিশাল সদর" },
-  { key: "bakerganj", label: "বাকেরগঞ্জ" },
-  { key: "wazirpur", label: "উজিরপুর" },
-  { key: "babuganj", label: "বাবুগঞ্জ" },
-  { key: "banaripara", label: "বানারীপাড়া" },
-  { key: "gournadi", label: "গৌরনদী" },
-  { key: "agailjhara", label: "আগৈলঝারা" },
-  { key: "mehendiganj", label: "মেহেন্দিগঞ্জ" },
-  { key: "muladi", label: "মুলাদী" },
-  { key: "hizla", label: "হিজলা" },
+  ...Object.entries(thanaNameMap).map(([key, label]) => ({ key, label })),
 ];
 
-/* ── icons ── */
+/* ── Icons ── */
 const IcoHosp = () => (
   <svg
     width="20"
@@ -148,276 +161,391 @@ const IcoPlus = () => (
   </svg>
 );
 
-/* ── variants ── */
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
+/* ── Motion Layout Settings ── */
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.04 } },
 };
-const cardV = {
-  hidden: { opacity: 0, y: 20, scale: 0.97 },
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
   show: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { type: "spring", stiffness: 280, damping: 24 },
+    transition: { type: "spring", stiffness: 260, damping: 22 },
   },
-  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } },
-};
-const headV = {
-  hidden: { opacity: 0, y: -12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } },
 };
 
-/* ── component ── */
+const HeaderVariants = {
+  hidden: { opacity: 0, y: -15 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
+
 const AllHospitals = () => {
   const { data, error, isLoading, isFetching } =
     useGetAllHospitalsQuery(undefined);
+  const [deleteHospital] = useDeleteHospitalMutation();
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const [selectedThana, setSelectedThana] = useState("all"); // থানার নতুন স্টেট
+  const [selectedThana, setSelectedThana] = useState("all");
 
-  if (isLoading) return <Loader />;
+  const handleDelete = (id: string, hospitalName: string) => {
+    Swal.fire({
+      title: "আপনি কি নিশ্চিত?",
+      text: `"${hospitalName}" হাসপাতালটি ডিলিট করা হবে!`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "হ্যাঁ, মুছুন!",
+      cancelButtonText: "না, থাক",
+      background: "#ffffff",
+      customClass: {
+        popup: "rounded-2xl",
+        confirmButton: "rounded-xl font-bold px-4 py-2",
+        cancelButton: "rounded-xl font-bold px-4 py-2",
+      },
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await deleteHospital(id).unwrap();
+          if (res?.success || res) {
+            Swal.fire({
+              title: "ডিলিট হয়েছে!",
+              text: "হাসপাতালটি সফলভাবে মুছে ফেলা হয়েছে।",
+              icon: "success",
+              confirmButtonColor: "#06b6d4",
+              customClass: { popup: "rounded-2xl" },
+            });
+          }
+        } catch (err: any) {
+          Swal.fire({
+            title: "ব্যর্থ হয়েছে!",
+            text:
+              err?.data?.message ||
+              "কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।",
+            icon: "error",
+            confirmButtonColor: "#ef4444",
+            customClass: { popup: "rounded-2xl" },
+          });
+        }
+      }
+    });
+  };
 
-  // API রেসপন্স স্ট্রাকচার সেফটি চেক
-  const rawData = data?.data?.data ? data.data.data : (data?.data ?? []);
+  const allHospitals = useMemo(() => {
+    const rawData = data?.data?.data ? data.data.data : (data?.data ?? []);
+    return rawData.filter((h: Hospital) => !h.isDeleted);
+  }, [data]);
 
-  const all: Hospital[] = rawData.filter((h: Hospital) => !h.isDeleted);
+  const handleFilterChange = (filterKey: string) => {
+    setFilter(filterKey);
+    if (filterKey === "all") {
+      setSelectedThana("all");
+      if (search) {
+        setSearch("");
+      }
+    }
+  };
 
-  const filtered = all.filter((h) => {
-    const okType = filter === "all" || h.type === filter;
+  const filteredHospitals = useMemo(() => {
+    return allHospitals.filter((h: Hospital) => {
+      const okType = filter === "all" || h.type === filter;
+      const okThana =
+        selectedThana === "all" ||
+        h.thana?.trim().toLowerCase() === selectedThana;
 
-    // সেফ কেস-ইনসেনসিটিভ থানা ফিল্টারিং লজিক
-    const okThana =
-      selectedThana === "all" ||
-      h.thana?.trim().toLowerCase() === selectedThana.toLowerCase();
+      const cleanSearch = search.toLowerCase().trim();
+      const okSearch =
+        !cleanSearch ||
+        [h.name, h.area, h.address].some((field) =>
+          field?.toLowerCase().includes(cleanSearch),
+        );
 
-    const okSearch = [h.name, h.area, h.address].some((s) =>
-      s?.toLowerCase().includes(search.toLowerCase()),
-    );
-
-    return okType && okThana && okSearch;
-  });
+      return okType && okThana && okSearch;
+    });
+  }, [allHospitals, filter, selectedThana, search]);
 
   return (
-    <div className="min-h-full bg-gray-50 p-5 md:p-7">
-      {/* ── Header ── */}
+    <div className="min-h-screen bg-slate-50/60 p-4 md:p-8 selection:bg-cyan-500 selection:text-white">
+      {/* ── Top Header and Filter Hub ── */}
       <motion.div
-        variants={headV}
+        variants={HeaderVariants}
         initial="hidden"
         animate="show"
-        className="flex flex-wrap items-center justify-between gap-3 mb-6"
+        className="flex flex-col gap-6 mb-8 bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100"
       >
-        {/* Title */}
-        <div className="flex items-center gap-3">
-          <motion.div
-            whileHover={{ scale: 1.08, rotate: -5 }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-200 shrink-0"
-          >
-            <IcoHosp />
-          </motion.div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-800 leading-tight">
-              সকল হাসপাতাল
-            </h2>
-            <p className="text-xs text-gray-400 mt-0.5">
-              বরিশাল স্বাস্থ্য বিভাগ
-            </p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Brand/Title */}
+          <div className="flex items-center gap-3.5">
+            <motion.div
+              whileHover={{ scale: 1.05, rotate: -3 }}
+              className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-200 cursor-pointer"
+            >
+              <IcoHosp />
+            </motion.div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+                হাসপাতাল ড্যাশবোর্ড
+              </h2>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">
+                স্বাস্থ্যসেবা ব্যবস্থাপনা প্যানেল
+              </p>
+            </div>
+          </div>
+
+          {/* Search and Right Controls */}
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <AnimatePresence>
+              {isFetching && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="text-xs text-cyan-600 bg-cyan-50/80 border border-cyan-100 px-3 py-1.5 rounded-xl font-medium"
+                >
+                  ⚡ ডাটা রিফ্রেশ হচ্ছে...
+                </motion.span>
+              )}
+            </AnimatePresence>
+
+            {/* Static Thana Selector */}
+            <div className="relative group w-full sm:w-auto">
+              <select
+                value={selectedThana}
+                onChange={(e) => setSelectedThana(e.target.value)}
+                className="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-8 py-2.5 text-sm text-slate-700 font-semibold outline-none focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all duration-200 cursor-pointer appearance-none"
+              >
+                {STATIC_THANAS.map((t) => (
+                  <option key={t.key} value={t.key}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-slate-600 transition-colors">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Search Field */}
+            <div className="relative flex items-center w-full sm:w-64 group">
+              <span className="absolute left-3.5 text-slate-400 group-focus-within:text-cyan-500 transition-colors pointer-events-none">
+                <IcoSearch />
+              </span>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="নাম, এলাকা বা ঠিকানা খুঁজুন..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-700 placeholder-slate-400 outline-none focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50 transition-all duration-300 shadow-inner"
+              />
+            </div>
+
+            <motion.div
+              key={filteredHospitals.length}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="hidden sm:flex text-sm font-bold text-cyan-600 bg-cyan-50 border border-cyan-100 px-3.5 py-2 rounded-xl font-mono items-center shadow-sm"
+            >
+              মোট: {filteredHospitals.length}টি
+            </motion.div>
+
+            <Link to="/dashboard/hospitals/add" className="w-full sm:w-auto">
+              <motion.button
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md shadow-cyan-200 transition-all cursor-pointer"
+              >
+                <IcoPlus />
+                <span>নতুন হাসপাতাল</span>
+              </motion.button>
+            </Link>
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Refreshing */}
-          <AnimatePresence>
-            {isFetching && (
-              <motion.span
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="text-xs text-cyan-600 bg-cyan-50 border border-cyan-200 px-3 py-1 rounded-full font-mono"
-              >
-                ↻ আপডেট
-              </motion.span>
-            )}
-          </AnimatePresence>
+        <div className="h-px bg-slate-100 w-full" />
 
-          {/* Thana Filter Dropdown (নতুন যুক্ত করা হয়েছে) */}
-          <div className="relative">
-            <select
-              value={selectedThana}
-              onChange={(e) => setSelectedThana(e.target.value)}
-              className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all shadow-sm cursor-pointer"
-            >
-              {THANAS.map((t) => (
-                <option key={t.key} value={t.key}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Search */}
-          <div className="relative flex items-center">
-            <span className="absolute left-3 text-gray-400 pointer-events-none">
-              <IcoSearch />
-            </span>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="খুঁজুন..."
-              className="bg-white border border-gray-200 rounded-full py-2 pl-9 pr-4 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all duration-200 w-36 focus:w-48 shadow-sm"
-            />
-          </div>
-
-          {/* Filter tabs */}
-          <div className="flex flex-wrap gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm">
-            {FILTERS.map((f) => (
-              <motion.button
+        {/* Categories Bar */}
+        <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100/70 rounded-xl max-w-max">
+          {FILTERS.map((f) => {
+            const isActive = filter === f.key;
+            return (
+              <button
                 key={f.key}
-                whileTap={{ scale: 0.93 }}
-                onClick={() => setFilter(f.key)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  filter === f.key
-                    ? "bg-cyan-500 text-white shadow"
-                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
-                }`}
+                onClick={() => handleFilterChange(f.key)}
+                className="relative px-4 py-2 rounded-lg text-sm font-bold transition-all duration-300 cursor-pointer select-none"
               >
-                {f.label}
-              </motion.button>
-            ))}
-          </div>
-
-          {/* Count */}
-          <motion.span
-            key={filtered.length}
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className="text-sm font-bold font-mono text-cyan-600 bg-cyan-50 border border-cyan-200 px-3 py-1 rounded-full"
-          >
-            {filtered.length}টি
-          </motion.span>
-
-          {/* Add button */}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.96 }}
-            className="flex items-center gap-1.5 bg-gradient-to-br from-cyan-500 to-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-md shadow-cyan-200 hover:shadow-lg hover:shadow-cyan-200 transition-shadow"
-          >
-            <IcoPlus />
-            <Link to="/dashboard/hospitals/add">
-              <span className="hidden sm:inline">নতুন</span>
-            </Link>
-          </motion.button>
+                {isActive && (
+                  <motion.div
+                    layoutId="activeFilterBg"
+                    className="absolute inset-0 bg-white rounded-lg shadow-sm border border-slate-200/50"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span
+                  className={`relative z-10 ${isActive ? "text-cyan-600" : "text-slate-500 hover:text-slate-800"}`}
+                >
+                  {f.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </motion.div>
 
-      {/* ── Main View (Error / Grid) ── */}
-      {error ? (
-        <div className="py-24 text-center text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm">
-          ⚠️ ডেটা লোড করতে সমস্যা হয়েছে।
+      {/* ── Main View (Cards/Loading) ── */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-white border border-slate-100 rounded-2xl p-5 space-y-4 animate-pulse shadow-sm"
+            >
+              <div className="flex justify-between items-center">
+                <div className="w-10 h-10 bg-slate-100 rounded-xl" />
+                <div className="w-16 h-5 bg-slate-100 rounded-full" />
+              </div>
+              <div className="h-5 bg-slate-100 rounded-md w-5/6" />
+              <div className="space-y-2 pt-2">
+                <div className="h-3.5 bg-slate-100 rounded w-full" />
+                <div className="h-3.5 bg-slate-100 rounded w-2/3" />
+              </div>
+              <div className="h-px bg-slate-50 pt-2" />
+              <div className="flex justify-between items-center pt-2">
+                <div className="w-14 h-4 bg-slate-50 rounded" />
+                <div className="flex gap-2">
+                  <div className="w-14 h-8 bg-slate-100 rounded-lg" />
+                  <div className="w-12 h-8 bg-slate-100 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="py-20 text-center text-red-500 bg-white rounded-2xl border border-dashed border-red-200 shadow-sm font-semibold max-w-md mx-auto">
+          ⚠️ ডাটাবেজ কানেকশনে সমস্যা হয়েছে। আবার চেষ্টা করুন।
         </div>
       ) : (
-        /* ── Grid ── */
         <motion.div
-          variants={stagger}
+          layout
+          variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
         >
           <AnimatePresence mode="popLayout">
-            {filtered.length === 0 ? (
+            {filteredHospitals.length === 0 ? (
               <motion.div
                 key="empty"
-                variants={cardV}
-                className="col-span-full py-24 text-center text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200 shadow-sm"
+                variants={cardVariants}
+                className="col-span-full py-28 text-center text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm font-medium"
               >
-                কোনো হাসপাতাল পাওয়া যায়নি।
+                এই ক্যাটাগরিতে কোনো হাসপাতাল পাওয়া যায়নি।
               </motion.div>
             ) : (
-              filtered.map((h) => {
-                const t = typeMap[h.type] ?? typeMap.government;
+              filteredHospitals.map((h: Hospital) => {
+                const hospitalType = h.type as HospitalTypeKey;
+                const t = typeMap[hospitalType] ?? typeMap.government;
+
+                const normalizedThana = h.thana?.trim().toLowerCase() || "";
+                const displayThana = thanaNameMap[normalizedThana] || h.thana;
+
                 return (
                   <motion.div
                     key={h._id}
                     layout
-                    variants={cardV}
+                    variants={cardVariants}
                     whileHover={{
-                      y: -4,
-                      boxShadow: "0 16px 32px rgba(0,0,0,0.10)",
+                      y: -6,
+                      scale: 1.01,
+                      boxShadow:
+                        "0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)",
                     }}
-                    className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm group cursor-pointer"
+                    className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm group flex flex-col justify-between cursor-pointer transition-all duration-300"
                   >
-                    {/* accent bar */}
-                    <div className={`h-[3px] bg-gradient-to-r ${t.bar}`} />
-
-                    <div className="p-4">
-                      {/* top */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div
-                          className={`w-10 h-10 rounded-xl ${t.icon} flex items-center justify-center shrink-0`}
-                        >
-                          <IcoHosp />
-                        </div>
-                        <span
-                          className={`text-[11px] font-semibold font-mono px-2.5 py-0.5 rounded-full border ${t.badge}`}
-                        >
-                          {t.label}
-                        </span>
-                      </div>
-
-                      {/* name */}
-                      <p className="text-sm font-bold text-gray-800 leading-snug mb-3 group-hover:text-cyan-700 transition-colors">
-                        {h.name}
-                      </p>
-
-                      {/* meta */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-start gap-2 text-xs text-gray-500">
-                          <span className={`mt-0.5 shrink-0 ${t.color}`}>
-                            <IcoPin />
-                          </span>
-                          <span>
-                            {h.thana &&
-                              `${THANAS.find((th) => th.key === h.thana?.toLowerCase())?.label || h.thana} — `}
-                            {h.area} — {h.address}
-                          </span>
-                        </div>
-                        {h.phone?.map((p, i) => (
+                    <div>
+                      <div className={`h-[4px] bg-gradient-to-r ${t.bar}`} />
+                      <div className="p-5">
+                        <div className="flex items-center justify-between mb-4">
                           <div
-                            key={i}
-                            className="flex items-center gap-2 text-xs text-gray-500"
+                            className={`w-9 h-9 rounded-xl ${t.icon} flex items-center justify-center shrink-0`}
                           >
-                            <span className={`shrink-0 ${t.color}`}>
-                              <IcoPhone />
-                            </span>
-                            <span className="font-mono">{p}</span>
+                            <IcoHosp />
                           </div>
-                        ))}
+                          <span
+                            className={`text-[11px] font-bold px-3 py-1 rounded-full border ${t.badge}`}
+                          >
+                            {t.label}
+                          </span>
+                        </div>
+
+                        <h3 className="text-base font-bold text-slate-800 leading-snug mb-3.5 group-hover:text-cyan-600 transition-colors duration-200">
+                          {h.name}
+                        </h3>
+
+                        <div className="space-y-2.5">
+                          <div className="flex items-start gap-2.5 text-xs text-slate-500 leading-relaxed">
+                            <span className={`mt-0.5 shrink-0 ${t.color}`}>
+                              <IcoPin />
+                            </span>
+                            <span>
+                              <strong className="text-slate-700 font-semibold">
+                                {displayThana && `${displayThana} — `}
+                              </strong>
+                              {h.area}, {h.address}
+                            </span>
+                          </div>
+
+                          {h.phone?.filter(Boolean).map((p, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2.5 text-xs text-slate-500"
+                            >
+                              <span className={`shrink-0 ${t.color}`}>
+                                <IcoPhone />
+                              </span>
+                              <span className="font-mono tracking-wide font-medium bg-slate-50 border border-slate-100/80 px-2 py-0.5 rounded-md text-slate-600">
+                                {p}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
+                    </div>
 
-                      {/* divider */}
-                      <div className="h-px bg-gray-100 my-3" />
-
-                      {/* footer */}
+                    <div className="p-5 pt-0">
+                      <div className="h-px bg-slate-100 mb-4" />
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-gray-400 font-mono">
+                        <span className="text-[11px] text-slate-400 font-semibold font-mono bg-slate-50 px-2 py-1 rounded-md">
+                          📆{" "}
                           {h.createdAt
                             ? new Date(h.createdAt).toLocaleDateString("bn-BD")
                             : "N/A"}
                         </span>
-                        <div className="flex gap-1.5">
+                        <div className="flex gap-2">
+                          <Link to={`#`}>
+                            <motion.button
+                              whileTap={{ scale: 0.95 }}
+                              className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-cyan-50 text-slate-600 hover:text-cyan-600 border border-slate-200 hover:border-cyan-100 transition-all cursor-pointer"
+                            >
+                              সম্পাদনা
+                            </motion.button>
+                          </Link>
                           <motion.button
-                            whileTap={{ scale: 0.92 }}
-                            className="text-xs font-semibold px-3 py-1 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-200 hover:bg-cyan-100 transition-colors"
-                          >
-                            সম্পাদনা
-                          </motion.button>
-                          <motion.button
-                            whileTap={{ scale: 0.92 }}
-                            className="text-xs font-semibold px-3 py-1 rounded-lg bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleDelete(h._id, h.name)}
+                            className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-500 border border-slate-200 hover:border-red-100 transition-all cursor-pointer"
                           >
                             মুছুন
                           </motion.button>
