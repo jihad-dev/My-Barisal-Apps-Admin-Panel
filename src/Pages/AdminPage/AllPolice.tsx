@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,7 +21,19 @@ import {
 } from "../../Redux/features/admin/adminApi";
 import Swal from "sweetalert2";
 
-// ১. প্রিমিয়াম টেবিল লোডিং কঙ্কাল (Skeleton Loader)
+// থানা অবজেক্টের টাইপ ডেফিনিশন (TypeScript Interface)
+interface PoliceStation {
+  _id: string;
+  thanaName: string;
+  location?: string;
+  ocName?: string;
+  ocNumber?: string;
+  dutyOfficer?: string;
+  controlRoom?: string;
+  isDeleted?: boolean;
+}
+
+// ১. প্রিমিয়াম টেবিল লোডিং কঙ্কাল (Skeleton Loader)
 const TableSkeleton = () => {
   return (
     <div className="w-full space-y-3 animate-pulse">
@@ -63,14 +76,14 @@ const AllPolice = () => {
   const itemsPerPage = 10;
 
   // ৪. মেমোরাইজড ডাটা এক্সট্র্যাক্ট (পারফরম্যান্স বুস্ট)
-  const policeList = useMemo(
-    () => policeRes?.data || policeRes || [],
-    [policeRes],
-  );
+  const policeList = useMemo<PoliceStation[]>(() => {
+    if (!policeRes) return [];
+    return policeRes.data || (Array.isArray(policeRes) ? policeRes : []);
+  }, [policeRes]);
 
-  // ৫. লাইভ সার্চ ফিল্টারিং লজিক (useMemo ব্যবহার করা হয়েছে অপ্রয়োজনীয় রেন্ডার এড়াতে)
+  // ৫. লাইভ সার্চ ফিল্টারিং লজিক (অপ্রয়োজনীয় রেন্ডার এড়াতে useMemo)
   const filteredPolice = useMemo(() => {
-    return policeList.filter((police: any) => {
+    return policeList.filter((police) => {
       if (police?.isDeleted) return false;
       if (!searchQuery) return true;
 
@@ -105,14 +118,13 @@ const AllPolice = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1); // সার্চ করলে রি-সেট হয়ে ১ম পেজে যাবে
+    setCurrentPage(1); // সার্চ করলে রি-সেট হয়ে ১ম পেজে যাবে
   };
 
   const handleDelete = async (id: string) => {
-    console.log(id);
     Swal.fire({
       title: "আপনি কি নিশ্চিত?",
-      text: "মুছে ফেলার পর এই থানার তথ্য আর ফিরে পাওয়া যাবে না!",
+      text: "মুছে ফেলার পর এই থানার তথ্য আর ফিরে পাওয়া যাবে না!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33", // লাল রঙের ডিলিট বাটন
@@ -121,24 +133,20 @@ const AllPolice = () => {
       cancelButtonText: "না, থাক",
       background: "#ffffff",
       customClass: {
-        popup: "rounded-2xl", // আপনার টেইলউইন্ড থিমের সাথে ম্যাচ করার জন্য
+        popup: "rounded-2xl",
         confirmButton: "rounded-xl px-4 py-2 text-sm font-semibold",
         cancelButton: "rounded-xl px-4 py-2 text-sm font-semibold",
       },
     }).then(async (result) => {
-      // ইউজার যদি 'হ্যাঁ' বাটনে ক্লিক করে
       if (result.isConfirmed) {
         try {
-          // ডিলিট রিকোয়েস্ট পাঠানো হচ্ছে
-          const res = await deletePolice(id).unwrap();
-          console.log(res);
+          await deletePolice(id).unwrap();
 
-          // সফল হলে সাকসেস মেসেজ দেখাবে
           Swal.fire({
-            title: "মুছে ফেলা হয়েছে!",
-            text: "থানাটি সফলভাবে তালিকা থেকে বাদ দেওয়া হয়েছে।",
+            title: "মুছে ফেলা হয়েছে!",
+            text: "থানাটি সফলভাবে তালিকা থেকে বাদ দেওয়া হয়েছে।",
             icon: "success",
-            confirmButtonColor: "#2563eb", // ব্লু বাটন
+            confirmButtonColor: "#2563eb",
             customClass: {
               popup: "rounded-2xl",
               confirmButton: "rounded-xl px-4 py-2 text-sm font-semibold",
@@ -147,10 +155,9 @@ const AllPolice = () => {
         } catch (err) {
           console.error("মুছে ফেলতে ব্যর্থ হয়েছে:", err);
 
-          // কোনো এরর হলে এরর মেসেজ দেখাবে
           Swal.fire({
-            title: "উফ! একটি সমস্যা হয়েছে",
-            text: "থানাটি মুছে ফেলা যায়নি। আবার চেষ্টা করুন।",
+            title: "উফ! একটি সমস্যা হয়েছে",
+            text: "থানাটি মুছে ফেলা যায়নি। আবার চেষ্টা করুন।",
             icon: "error",
             confirmButtonColor: "#2563eb",
             customClass: {
@@ -163,19 +170,27 @@ const AllPolice = () => {
     });
   };
 
-  // ৮. ডাইনামিক এপিআই এরর মেসেজ হ্যান্ডলার
+  // ৮. ডাইনামিক এপিআই এরর মেসেজ হ্যান্ডলার (TS2322 টাইপ এরর ফিক্সড)
   const getErrorMessage = () => {
-    if (!error) return "একটি অজানা সমস্যা দেখা দিয়েছে।";
-    if ("status" in error) {
+    if (!error) return "একটি অজানা সমস্যা দেখা দিয়েছে।";
+
+    // FetchBaseQueryError টাইপ চেক
+    if (typeof error === "object" && "status" in error) {
       if (error.status === "FETCH_ERROR")
         return "সার্ভারের সাথে সংযোগ করা যাচ্ছে না। অনুগ্রহ করে আপনার ইন্টারনেট কানেকশন বা ব্যাকএন্ড চেক করুন।";
       if (error.status === 401)
-        return "আপনার সেশন শেষ হয়ে গেছে। অনুগ্রহ করে আবার লগইন করুন।";
+        return "আপনার সেশন শেষ হয়ে গেছে। অনুগ্রহ করে আবার লগইন করুন।";
       if (error.status === 403)
         return "আপনার এই তথ্য অ্যাক্সেস করার অনুমতি নেই।";
       return `সার্ভার ত্রুটি কোড: ${error.status}`;
     }
-    return error.message || "নেটওয়ার্ক ত্রুটি ঘটেছে।";
+
+    // SerializedError টাইপ চেক
+    if (typeof error === "object" && "message" in error) {
+      return (error as any).message || "নেটওয়ার্ক ত্রুটি ঘটেছে।";
+    }
+
+    return "নেটওয়ার্ক ত্রুটি ঘটেছে।";
   };
 
   return (
@@ -189,7 +204,7 @@ const AllPolice = () => {
               থানা তালিকা {!isLoading && !isError && `(${totalItems})`}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
-              নাগরিক সুরক্ষায় বিভিন্ন থানা, ফাঁড়ি এবং দায়িত্বরত কর্মকর্তাদের
+              নাগরিক সুরক্ষায় বিভিন্ন থানা, ফাঁড়ি এবং দায়িত্বরত কর্মকর্তাদের
               যোগাযোগ নম্বর ব্যবস্থাপনা।
             </p>
           </div>
@@ -211,7 +226,7 @@ const AllPolice = () => {
             />
             <input
               type="text"
-              placeholder="থানার নাম, ওসির নাম, অবস্থান বা যেকোনো ফোন নম্বর দিয়ে খুঁজুন..."
+              placeholder="থানার নাম, ওসির নাম, অবস্থান বা যেকোনো ফোন নম্বর দিয়ে খুঁজুন..."
               value={searchQuery}
               onChange={handleSearchChange}
               className="w-full bg-gray-50 text-gray-900 text-sm pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all"
@@ -228,7 +243,7 @@ const AllPolice = () => {
               <FiAlertCircle size={32} />
             </div>
             <h3 className="font-bold text-gray-900 text-lg">
-              উফ! ডেটা লোড করা যায়নি
+              উফ! ডেটা লোড করা যায়নি
             </h3>
             <p className="text-sm text-gray-500 mt-1 mb-5 max-w-sm">
               {getErrorMessage()}
@@ -244,18 +259,18 @@ const AllPolice = () => {
           <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm text-center">
             <FiSearch size={40} className="text-gray-300 mb-2" />
             <h3 className="text-gray-600 font-bold text-base">
-              কোনো তথ্য পাওয়া যায়নি
+              কোনো তথ্য পাওয়া যায়নি
             </h3>
             <p className="text-xs text-gray-400 mt-0.5">
-              ভিন্ন কোনো কিওয়ার্ড ব্যবহার করে ট্রাই করুন।
+              ভিন্ন কোনো কিওয়ার্ড ব্যবহার করে ট্রাই করুন।
             </p>
           </div>
         ) : (
           <>
-            {/* ১. মোবাইল কার্ড ভিউ (Responsive Layout - md স্ক্রিনের নিচে অ্যাক্টিভ হবে) */}
+            {/* ১. মোবাইল কার্ড ভিউ */}
             <div className="grid grid-cols-1 gap-4 md:hidden">
               <AnimatePresence mode="popLayout">
-                {currentPoliceData.map((police: any, index) => (
+                {currentPoliceData.map((police, index) => (
                   <motion.div
                     key={police?._id || `card-${index}`}
                     initial={{ opacity: 0, scale: 0.98 }}
@@ -275,7 +290,7 @@ const AllPolice = () => {
                       <button
                         disabled={isDeleting}
                         onClick={() => handleDelete(police?._id)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
                       >
                         <FiTrash2 size={16} />
                       </button>
@@ -287,7 +302,7 @@ const AllPolice = () => {
                           className="text-gray-400 flex-shrink-0"
                           size={14}
                         />
-                        <span>{police?.location || "ঠিকানা দেওয়া নেই"}</span>
+                        <span>{police?.location || "ঠিকানা দেওয়া নেই"}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <FiUser
@@ -325,14 +340,13 @@ const AllPolice = () => {
               </AnimatePresence>
             </div>
 
-            {/* ২. ডেক্সটপ টেবিল ভিউ (এখানে min-h এবং ফিক্সড কলাম উইথ দিয়ে Jumping/Glitch ফিক্স করা হয়েছে) */}
+            {/* ২. ডেক্সটপ টেবিল ভিউ */}
             <div className="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="overflow-x-auto min-h-[535px] flex flex-col justify-between">
                 <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
                   <thead>
                     <tr className="bg-gray-50/70 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                      {/* প্রতিটি কলামের উইথ পার্সেন্টেজ দিয়ে সম্পূর্ণ লক করা হয়েছে */}
-                      <th className="py-4 px-6 w-[22%]">থানা / ফাঁড়ির নাম</th>
+                      <th className="py-4 px-6 w-[22%]">থানা / ফাঁড়ির নাম</th>
                       <th className="py-4 px-6 w-[26%]">অবস্থান</th>
                       <th className="py-4 px-6 w-[20%]">ওসি ও নম্বর</th>
                       <th className="py-4 px-6 w-[13%]">ডিউটি অফিসার</th>
@@ -346,14 +360,14 @@ const AllPolice = () => {
                     className="divide-y divide-gray-50 text-sm text-gray-700"
                   >
                     <AnimatePresence mode="popLayout" initial={false}>
-                      {currentPoliceData.map((police: any, index: number) => (
+                      {currentPoliceData.map((police, index) => (
                         <motion.tr
                           key={police?._id || `row-${index}`}
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.15 }}
-                          className="hover:bg-gray-50/40 transition-colors h-[49px]" // রো হাইট ফিক্সড
+                          className="hover:bg-gray-50/40 transition-colors h-[49px]"
                         >
                           {/* কলাম ১: থানা নাম */}
                           <td className="py-3 px-6 w-[22%] truncate">
@@ -468,7 +482,7 @@ const AllPolice = () => {
                       ? totalItems
                       : currentPage * itemsPerPage}
                   </span>{" "}
-                  দেখানো হচ্ছে
+                  দেখানো হচ্ছে
                 </p>
 
                 <div className="flex items-center gap-2">

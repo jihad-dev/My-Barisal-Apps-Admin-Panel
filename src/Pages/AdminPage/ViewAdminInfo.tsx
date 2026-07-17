@@ -1,36 +1,40 @@
+
 import { useParams } from "react-router-dom";
 import { User, Phone, Calendar, Mail, ArrowLeft } from "lucide-react";
 import Loader from "../../utils/Loader";
 import { useGetSingleAdminQuery } from "../../Redux/features/admin/adminApi";
 import { Link } from "react-router-dom";
 
-interface UserData {
-  _id: string;
-  name: string;
-  email: string;
-  image?: string;
-  status: string;
-  phone?: string;
-  address?: string;
-  role: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface ApiResponse {
-  data: UserData;
-}
-
 const ViewAdminInfo = () => {
-  const { id } = useParams();
-  const { data: response, isLoading } = useGetSingleAdminQuery(id) as {
-    data: ApiResponse | undefined;
-    isLoading: boolean;
-  };
+  const { id } = useParams<{ id: string }>(); // useParams-কে টাইপ ডিফাইন করে দেওয়া হলো
+
+  // id না থাকলে কোয়েরি রান হওয়া skip করবে, টাইপ কাস্টিং (as) করার আর প্রয়োজন নেই
+  const { data: response, isLoading } = useGetSingleAdminQuery(id ?? "", {
+    skip: !id,
+  });
+
   const user = response?.data;
 
   if (isLoading) {
     return <Loader />;
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center p-6 bg-white rounded-2xl shadow-md">
+          <p className="text-gray-600 font-medium">
+            কোনো অ্যাডমিন তথ্য পাওয়া যায়নি।
+          </p>
+          <Link
+            to="/dashboard/all-admin"
+            className="text-blue-600 hover:underline mt-2 inline-block"
+          >
+            তালিকায় ফিরে যান
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

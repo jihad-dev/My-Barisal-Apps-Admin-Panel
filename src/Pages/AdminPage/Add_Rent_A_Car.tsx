@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -17,17 +18,17 @@ import { Link } from "react-router-dom";
 import { useAddCarMutation } from "../../Redux/features/admin/adminApi";
 import { toast } from "sonner";
 
-// ১. টাইপস্ক্রিপ্ট ইন্টারফেস ডিফাইন
+// ১. টাইপস্ক্রিপ্ট ইন্টারফেস ডিফাইন (ইনপুট ফিল্ডের জন্য টাইপ সহজ করা হয়েছে)
 interface CarFormData {
   serviceName: string;
   proprietorName: string;
   description: string;
   area: string;
-  thana: string; // ব্যাকএন্ড রিকোয়ারমেন্ট অনুযায়ী 'thana' করা হয়েছে
+  thana: string;
   serviceArea: string;
   whatsapp: string;
-  rentPerDay: string | number;
-  rentPerTrip: string | number;
+  rentPerDay: string; // ইনপুটের জন্য string রাখা সবচেয়ে নিরাপদ
+  rentPerTrip: string; // ইনপুটের জন্য string রাখা সবচেয়ে নিরাপদ
   status: string;
 }
 
@@ -40,7 +41,6 @@ const AVAILABLE_CAR_TYPES = [
   { label: "Pickup", value: "pickup" },
 ];
 
-// বরিশালের থানাগুলোর লিস্ট (ড্রপডাউনের জন্য)
 const BARISAL_THANAS = [
   { key: "barisal sadar", label: "বরিশাল সদর" },
   { key: "bakerganj", label: "বাকেরগঞ্জ" },
@@ -64,7 +64,7 @@ const Add_Rent_A_Car = () => {
     proprietorName: "",
     description: "",
     area: "",
-    thana: "", // ড্রপডাউন থেকে ভ্যালু সেট হবে
+    thana: "",
     serviceArea: "",
     whatsapp: "",
     rentPerDay: "",
@@ -167,8 +167,8 @@ const Add_Rent_A_Car = () => {
     if (!formData.proprietorName.trim())
       newErrors.proprietorName = "প্রোপ্রাইটর নাম আবশ্যিক!";
     if (!formData.description.trim()) newErrors.description = "বিবরণ আবশ্যিক!";
-    if (!formData.area.trim()) newErrors.area = "এلاকা উল্লেখ করুন!";
-    if (!formData.thana) newErrors.thana = "উপজেলা/থানা সিলেক্ট করুন!"; // thana চেক
+    if (!formData.area.trim()) newErrors.area = "এলাকা উল্লেখ করুন!";
+    if (!formData.thana) newErrors.thana = "উপজেলা/থানা সিলেক্ট করুন!";
     if (!formData.serviceArea.trim())
       newErrors.serviceArea = "সার্ভিস কাভারেজ এরিয়া আবশ্যিক!";
     if (!formData.rentPerDay)
@@ -201,13 +201,12 @@ const Add_Rent_A_Car = () => {
       return toast.error("অনুগ্রহ করে কমপক্ষে একটি গাড়ির ধরন সিলেক্ট করুন!");
     }
 
-    // ব্যাকএন্ড Zod স্কিমার সাথে ম্যাচ করা অবজেক্ট স্ট্রাকচার
     const finalData = {
       serviceName: formData.serviceName.trim(),
       proprietorName: formData.proprietorName.trim(),
       description: formData.description.trim(),
       area: formData.area.trim(),
-      thana: formData.thana, // নিশ্চিতভাবে ডাটাবেজে স্ট্রিং ভ্যালু যাচ্ছে
+      thana: formData.thana,
       serviceArea: formData.serviceArea.trim(),
       whatsapp: formData.whatsapp,
       status: formData.status,
@@ -217,7 +216,9 @@ const Add_Rent_A_Car = () => {
       rentPerTrip: Number(formData.rentPerTrip),
     };
 
-    let toastId = "";
+    // সমাধান: toastId এর টাইপ string | number করা হয়েছে
+    let toastId: string | number = "";
+
     try {
       toastId = toast.loading("নতুন সার্ভিস ডাটাবেজে যুক্ত করা হচ্ছে...");
       await addCar(finalData).unwrap();
@@ -303,7 +304,7 @@ const Add_Rent_A_Car = () => {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                  <FiUser size={13} className="text-gray-400" /> プロప్రাইটর নাম{" "}
+                  <FiUser size={13} className="text-gray-400" /> প্রোপ্রাইটর নাম{" "}
                   <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -392,7 +393,7 @@ const Add_Rent_A_Car = () => {
                 </label>
                 <div className="relative">
                   <select
-                    name="thana" // ব্যাকএন্ড কি 'thana' তে সেট
+                    name="thana"
                     value={formData.thana}
                     onChange={handleInputChange}
                     className={`w-full bg-gray-50/70 text-gray-900 text-sm px-4 py-2.5 rounded-xl border focus:bg-white focus:ring-2 outline-none transition-all font-medium appearance-none cursor-pointer ${
@@ -569,7 +570,7 @@ const Add_Rent_A_Car = () => {
           {/* সেকশন ৪: গাড়ির ধরন */}
           <div>
             <label className="text-xs font-bold text-gray-700 flex items-center gap-1 mb-3">
-              <FiLayers size={13} className="text-gray-400" /> গাড়ির ধরন বা
+              <FiLayers size={13} className="text-gray-400" /> গাড়ির ধরন বা
               ক্যাটাগরি <span className="text-rose-500">*</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

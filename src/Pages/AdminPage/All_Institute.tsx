@@ -1,4 +1,5 @@
-import  { useState, useMemo } from "react";
+
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch,
@@ -23,7 +24,7 @@ import {
 import { useGetAllInstitutionsQuery } from "../../Redux/features/admin/adminApi";
 import { Link } from "react-router-dom";
 
-// আপনার অফিশিয়াল টাইপ স্কিমা
+// আপনার অফিশিয়াল টাইপ স্কিমা
 export type TInstitutionType =
   | "primary_school"
   | "high_school"
@@ -109,19 +110,27 @@ const All_Institute = () => {
     }
   };
 
-  // ৩. এরর মেসেজ হ্যান্ডলিং
+  // ৩. এরর মেসেজ হ্যান্ডলিং (১০০% টাইপ-সেফ ও সঠিক সলিউশন)
   const getErrorMessage = () => {
     if (!error) return "সার্ভার রেসপন্স করছে না।";
-    if ("status" in error) {
-      const data = error.data as any;
+
+    // টাইপস্ক্রিপ্টকে নিশ্চিত করা যে এটি একটি অবজেক্ট এবং এতে 'status' ও 'data' আছে
+    const err = error as Record<string, unknown>;
+
+    if (typeof err === "object" && "status" in err && "data" in err) {
+      const errorData = err.data as Record<string, unknown>;
       return (
-        data?.message ||
-        `Error ${error.status}: ডাটা লোড করতে ইন্টারনাল সমস্যা হয়েছে।`
+        (errorData?.message as string) ||
+        `Error ${err.status}: ডাটা লোড করতে ইন্টারনাল সমস্যা হয়েছে।`
       );
     }
-    return error.message || "ইন্টারনেট কানেকশন চেক করে আবার চেষ্টা করুন।";
-  };
 
+    // SerializedError এর জন্য ব্যাকআপ চেক
+    return (
+      (error as { message?: string }).message ||
+      "ইন্টারনেট কানেকশন চেক করে আবার চেষ্টা করুন।"
+    );
+  };
   return (
     <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 font-sans antialiased text-slate-800">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -289,7 +298,7 @@ const All_Institute = () => {
                           </div>
                         </td>
 
-                        {/* ক্যাটাগরি ও প্রতিষ্ঠা সাল (ফিক্সড ও ইউনিক কালার ব্যাজ) */}
+                        {/* ক্যাটাগরি ও প্রতিষ্ঠা সাল */}
                         <td className="py-4 px-6">
                           <div className="space-y-1">
                             <span
@@ -316,8 +325,8 @@ const All_Institute = () => {
                               {item.type === "high_school" && "উচ্চ বিদ্যালয়"}
                               {item.type === "college" && "কলেজ"}
                               {item.type === "university" && "বিশ্ববিদ্যালয়"}
-                              {item.type === "madrasa" && "(মাদরাসা)"}
-                              {item.type === "masjid" && "(মসজিদ)"}
+                              {item.type === "madrasa" && "মাদরাসা"}
+                              {item.type === "masjid" && "মসজিদ"}
                               {item.type === "mandir" && "মন্দির"}
                               {![
                                 "primary_school",
@@ -469,7 +478,7 @@ const All_Institute = () => {
                 <button
                   type="button"
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
                   className="p-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
                   <FiChevronRight size={16} />

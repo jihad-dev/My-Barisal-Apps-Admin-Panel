@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import {   Menu, Settings, ChevronDown } from 'lucide-react';
-import Button from '../ui/Button';
+import {   Menu, ChevronDown } from 'lucide-react';
+
 import { useAppDispatch } from '../../Redux/hooks';
 import { logout } from '../../Redux/features/auth/authSlice';
 import { Link } from 'react-router-dom';
@@ -31,15 +31,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
           {/* Right side - User menu, notifications */}
           <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<Settings size={16} />}
-              className="hidden lg:flex"
-            >
-              Settings
-            </Button>
-
+          
             {/* Profile dropdown */}
             <div className="relative">
               <button
