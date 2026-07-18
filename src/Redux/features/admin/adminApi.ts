@@ -151,12 +151,21 @@ const adminApi = baseApi.injectEndpoints({
          providesTags: ['ambulances'],
       }),
 
-      addAmbulance: builder.mutation<any, any>({
+      addAmbulance: builder.mutation<any, string>({
          query: (newAmbulance) => ({
             url: '/ambulances/add-ambulance',
             method: 'POST',
             body: newAmbulance,
          }),
+         invalidatesTags: ['ambulances'],
+      }),
+      // ... অন্যান্য মিউটেশনের নিচে এটি যোগ করুন
+      deleteAmbulance: builder.mutation<any, string>({
+         query: (id) => ({
+            url: `/ambulances/${id}`,
+            method: 'DELETE',
+         }),
+      
          invalidatesTags: ['ambulances'],
       }),
 
@@ -391,5 +400,6 @@ export const {
    useGetAllCarsQuery,
    useAddCarMutation,
    useDeleteCarMutation,
-   useDeleteHospitalMutation
+   useDeleteHospitalMutation,
+   useDeleteAmbulanceMutation
 } = adminApi;
