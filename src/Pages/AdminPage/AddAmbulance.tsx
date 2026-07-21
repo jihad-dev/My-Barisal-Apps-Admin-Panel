@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -119,7 +119,7 @@ const AddAmbulance = () => {
     let toastId: string | number = "";
     try {
       toastId = toast.loading("অ্যাম্বুলেন্স যোগ করা হচ্ছে...");
-      const res = await addAmbulance(submitData).unwrap();
+      const res = await addAmbulance(submitData as any).unwrap();
 
       if (res?.success || res) {
         toast.success("নতুন অ্যাম্বুলেন্স সফলভাবে যোগ করা হয়েছে!", {
