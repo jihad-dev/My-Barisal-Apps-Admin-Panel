@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 const Login = () => {
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("admin@gmail.com");
+  const [email, setEmail] = useState("jihadul.islam.dev@gmail.com");
   const [password, setPassword] = useState("123456");
 
   const [login, { isLoading }] = useLoginMutation();
