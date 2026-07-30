@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { User, Phone, Calendar, Mail, ArrowLeft } from "lucide-react";
+import { Phone, Calendar, Mail, ArrowLeft } from "lucide-react";
 import Loader from "../../utils/Loader";
 import { useGetSingleUserQuery } from "../../Redux/features/auth/authApi";
 
@@ -43,17 +43,13 @@ const ViewUserInfo = () => {
                             <div className="w-full md:w-1/3">
                                 <div className="bg-gray-50 rounded-2xl p-6 text-center">
                                     <div className="w-32 h-32 mx-auto bg-white rounded-full shadow-lg p-1 mb-4">
-                                        {user?.image ? (
+                                        
                                             <img
-                                                src={user.image}
-                                                alt={user.name}
+                                                src={"https://img.magnific.com/premium-photo/memoji-emoji-handsome-smiling-man-white-background_826801-6987.jpg?semt=ais_test_b&w=740&q=80"} 
+                                                alt='sf'
                                                 className="w-full h-full object-cover rounded-full"
                                             />
-                                        ) : (
-                                            <div className="w-full h-full rounded-full bg-blue-50 flex items-center justify-center">
-                                                <User className="w-16 h-16 text-blue-400" />
-                                            </div>
-                                        )}
+                                      
                                     </div>
                                     <h1 className="text-2xl font-bold text-gray-900 mb-2">{user?.name}</h1>
                                     <div className="flex items-center justify-center gap-2 text-gray-600">
